@@ -11,11 +11,26 @@
   --radius-card: 16px;
   --radius-input: 10px;
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  /* IDE 다크 테마 */
+  --color-ide-bg: #1e1e1e;
+  --color-ide-sidebar: #252526;
+  --color-ide-titlebar: #323233;
+  --color-ide-statusbar: #007acc;
+  --color-ide-panel-bg: #1e1e1e;
+  --color-ide-border: #3e3e42;
+  --color-ide-text: #cccccc;
+  --color-ide-text-dim: #858585;
+  --color-ide-active: #094771;
+  --color-ide-hover: #2a2d2e;
+  --color-ide-tab-active: #1e1e1e;
+  --color-ide-tab-inactive: #2d2d2d;
 }
 
 body {
   margin: 0;
   font-family: Arial, sans-serif;
+  overflow: hidden;
 }
 
 @keyframes spin {

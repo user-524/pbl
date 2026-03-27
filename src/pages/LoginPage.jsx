@@ -30,7 +30,7 @@ function LoginPage() {
 
       if (data.success && data.access_token) {
         localStorage.setItem('access_token', data.access_token)
-        navigate('/input')
+        navigate('/workspace')
       } else {
         setErrorMessage(data.message || '로그인에 실패했습니다.')
       }
@@ -44,7 +44,7 @@ function LoginPage() {
 
   const handleDemoStart = () => {
     localStorage.setItem('access_token', 'test-admin-token')
-    navigate('/input')
+    navigate('/workspace')
   }
 
   return (
