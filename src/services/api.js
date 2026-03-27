@@ -1,20 +1,2 @@
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-
-  return config
-})
-
-export default api
+// 하위 호환성 유지용 re-export. 새 코드는 src/api/axiosInstance.js 를 직접 사용할 것.
+export { default } from '../api/axiosInstance.js'
