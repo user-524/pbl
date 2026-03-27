@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { submitAnswersForEvaluation } from '../services/qaService'
 import useSubmissionStore from '../store/submissionStore'
+import CodeEditor from '../components/editor/CodeEditor'
+import Button from '../components/ui/Button'
 
 function QASessionPage() {
   const { submissionId } = useParams()
@@ -33,9 +35,9 @@ function QASessionPage() {
           <p style={styles.description}>
             질문 데이터가 없습니다. 먼저 분석 페이지를 거쳐주세요.
           </p>
-          <button style={styles.button} onClick={() => navigate('/input')}>
+          <Button onClick={() => navigate('/input')}>
             입력 페이지로 돌아가기
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -89,7 +91,7 @@ function QASessionPage() {
         <section style={styles.leftPanel}>
           <h2 style={styles.panelTitle}>제출 코드</h2>
           <p style={styles.smallText}>제출 ID: {submissionId}</p>
-          <pre style={styles.codeBlock}>{draft.raw_code}</pre>
+          <CodeEditor readOnly value={draft.raw_code} language={draft.language} height="440px" />
         </section>
 
         <section style={styles.rightPanel}>
@@ -116,32 +118,27 @@ function QASessionPage() {
           {errorMessage && <p style={styles.errorText}>{errorMessage}</p>}
 
           <div style={styles.buttonGroup}>
-            <button
-              type="button"
-              style={styles.secondaryButton}
+            <Button
+              variant="secondary"
               onClick={handlePrev}
               disabled={isFirstQuestion}
+              style={{ flex: 1 }}
             >
               이전 질문
-            </button>
+            </Button>
 
             {!isLastQuestion ? (
-              <button
-                type="button"
-                style={styles.button}
-                onClick={handleNext}
-              >
+              <Button onClick={handleNext} style={{ flex: 1 }}>
                 다음 질문
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
-                style={styles.button}
+              <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                isLoading={isSubmitting}
+                style={{ flex: 1 }}
               >
                 {isSubmitting ? '채점 중...' : '답변 제출하기'}
-              </button>
+              </Button>
             )}
           </div>
         </section>
@@ -153,7 +150,7 @@ function QASessionPage() {
 const styles = {
   page: {
     minHeight: '100vh',
-    backgroundColor: '#f5f7fb',
+    backgroundColor: 'var(--color-bg)',
     padding: '40px 20px',
   },
   layout: {
@@ -164,16 +161,16 @@ const styles = {
     gap: '20px',
   },
   leftPanel: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     padding: '24px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-card)',
   },
   rightPanel: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     padding: '24px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-card)',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
@@ -188,15 +185,15 @@ const styles = {
   },
   description: {
     margin: 0,
-    color: '#555',
+    color: 'var(--color-text-sub)',
   },
   smallText: {
     marginTop: 0,
-    color: '#666',
+    color: 'var(--color-text-sub)',
     fontSize: '14px',
   },
   questionCard: {
-    border: '1px solid #e5e7eb',
+    border: '1px solid var(--color-border)',
     borderRadius: '12px',
     padding: '16px',
     backgroundColor: '#fafafa',
@@ -204,7 +201,7 @@ const styles = {
   questionType: {
     margin: '0 0 8px 0',
     fontSize: '14px',
-    color: '#2563eb',
+    color: 'var(--color-primary)',
     fontWeight: '600',
   },
   questionText: {
@@ -221,48 +218,17 @@ const styles = {
     padding: '12px',
     fontSize: '16px',
     border: '1px solid #d0d7de',
-    borderRadius: '10px',
+    borderRadius: 'var(--radius-input)',
     resize: 'vertical',
     fontFamily: 'inherit',
-  },
-  codeBlock: {
-    backgroundColor: '#111827',
-    color: '#f9fafb',
-    padding: '16px',
-    borderRadius: '10px',
-    overflowX: 'auto',
-    fontFamily: 'monospace',
-    fontSize: '14px',
-    lineHeight: '1.5',
-    minHeight: '300px',
   },
   buttonGroup: {
     display: 'flex',
     gap: '12px',
     marginTop: '4px',
   },
-  button: {
-    flex: 1,
-    padding: '14px',
-    border: 'none',
-    borderRadius: '10px',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
-  secondaryButton: {
-    flex: 1,
-    padding: '14px',
-    border: '1px solid #2563eb',
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    color: '#2563eb',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
   errorText: {
-    color: '#dc2626',
+    color: 'var(--color-error)',
     fontSize: '14px',
     margin: 0,
   },
@@ -270,10 +236,10 @@ const styles = {
     width: '100%',
     maxWidth: '760px',
     margin: '0 auto',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     padding: '32px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-card)',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',

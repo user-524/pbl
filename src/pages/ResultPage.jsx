@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getReportById } from '../services/reportService'
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ResponsiveContainer,
+} from 'recharts'
+import Spinner from '../components/ui/Spinner'
+import Button from '../components/ui/Button'
 
 function ResultPage() {
   const { reportId } = useParams()
@@ -34,7 +44,10 @@ function ResultPage() {
       <div style={styles.page}>
         <div style={styles.card}>
           <h1 style={styles.title}>결과 리포트 불러오는 중...</h1>
-          <p style={styles.description}>잠시만 기다려주세요.</p>
+          <div style={styles.loadingBox}>
+            <Spinner size={32} />
+            <p style={styles.loadingText}>잠시만 기다려주세요.</p>
+          </div>
         </div>
       </div>
     )
@@ -46,13 +59,19 @@ function ResultPage() {
         <div style={styles.card}>
           <h1 style={styles.title}>Result Page</h1>
           <p style={styles.errorText}>{errorMessage || '리포트가 없습니다.'}</p>
-          <button style={styles.button} onClick={() => navigate('/input')}>
+          <Button onClick={() => navigate('/input')}>
             새 문제 입력하러 가기
-          </button>
+          </Button>
         </div>
       </div>
     )
   }
+
+  const radarData = [
+    { subject: 'Keyword Match', score: reportData.detail_scores.keyword_match, fullMark: 40 },
+    { subject: 'Semantic Similarity', score: reportData.detail_scores.semantic_similarity, fullMark: 45 },
+    { subject: 'Time Complexity', score: reportData.detail_scores.time_complexity, fullMark: 20 },
+  ]
 
   return (
     <div style={styles.page}>
@@ -67,6 +86,14 @@ function ResultPage() {
 
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>세부 점수</h2>
+          <ResponsiveContainer width="100%" height={280}>
+            <RadarChart data={radarData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="subject" />
+              <PolarRadiusAxis />
+              <Radar dataKey="score" fill="var(--color-primary)" fillOpacity={0.2} stroke="var(--color-primary)" />
+            </RadarChart>
+          </ResponsiveContainer>
           <div style={styles.detailGrid}>
             <div style={styles.detailCard}>
               <p style={styles.detailLabel}>Keyword Match</p>
@@ -119,13 +146,13 @@ function ResultPage() {
         </section>
 
         <div style={styles.buttonGroup}>
-          <button style={styles.secondaryButton} onClick={() => navigate('/input')}>
+          <Button variant="secondary" onClick={() => navigate('/input')} style={{ flex: 1 }}>
             새 문제 입력하기
-          </button>
+          </Button>
 
-          <button style={styles.button} onClick={() => navigate('/login')}>
+          <Button onClick={() => navigate('/login')} style={{ flex: 1 }}>
             처음으로 돌아가기
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -135,7 +162,7 @@ function ResultPage() {
 const styles = {
   page: {
     minHeight: '100vh',
-    backgroundColor: '#f5f7fb',
+    backgroundColor: 'var(--color-bg)',
     padding: '40px 20px',
     display: 'flex',
     justifyContent: 'center',
@@ -143,10 +170,10 @@ const styles = {
   card: {
     width: '100%',
     maxWidth: '860px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     padding: '32px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-card)',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
@@ -157,27 +184,27 @@ const styles = {
   },
   description: {
     margin: 0,
-    color: '#555',
+    color: 'var(--color-text-sub)',
   },
   scoreBox: {
-    backgroundColor: '#eff6ff',
-    borderRadius: '16px',
+    backgroundColor: 'var(--color-primary-light)',
+    borderRadius: 'var(--radius-card)',
     padding: '24px',
     textAlign: 'center',
   },
   scoreLabel: {
     margin: 0,
-    color: '#1d4ed8',
+    color: 'var(--color-primary)',
     fontWeight: '600',
   },
   scoreValue: {
     margin: '12px 0 0 0',
     fontSize: '40px',
     fontWeight: '700',
-    color: '#111827',
+    color: 'var(--color-text-main)',
   },
   section: {
-    borderTop: '1px solid #e5e7eb',
+    borderTop: '1px solid var(--color-border)',
     paddingTop: '16px',
   },
   sectionTitle: {
@@ -188,16 +215,17 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '12px',
+    marginTop: '12px',
   },
   detailCard: {
-    border: '1px solid #e5e7eb',
+    border: '1px solid var(--color-border)',
     borderRadius: '12px',
     padding: '16px',
     backgroundColor: '#fafafa',
   },
   detailLabel: {
     margin: 0,
-    color: '#666',
+    color: 'var(--color-text-sub)',
     fontSize: '14px',
   },
   detailValue: {
@@ -221,7 +249,7 @@ const styles = {
   text: {
     margin: 0,
     lineHeight: '1.7',
-    color: '#222',
+    color: 'var(--color-text-main)',
   },
   list: {
     margin: 0,
@@ -235,28 +263,23 @@ const styles = {
     gap: '12px',
     marginTop: '8px',
   },
-  button: {
-    flex: 1,
-    padding: '14px',
-    border: 'none',
-    borderRadius: '10px',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    fontSize: '16px',
-    cursor: 'pointer',
+  loadingBox: {
+    marginTop: '12px',
+    padding: '24px',
+    borderRadius: '12px',
+    backgroundColor: 'var(--color-primary-light)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px',
   },
-  secondaryButton: {
-    flex: 1,
-    padding: '14px',
-    border: '1px solid #2563eb',
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    color: '#2563eb',
-    fontSize: '16px',
-    cursor: 'pointer',
+  loadingText: {
+    margin: 0,
+    color: 'var(--color-primary)',
+    fontWeight: '600',
   },
   errorText: {
-    color: '#dc2626',
+    color: 'var(--color-error)',
     fontSize: '14px',
   },
 }

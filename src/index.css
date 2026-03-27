@@ -1,4 +1,24 @@
+:root {
+  --color-primary: #2563eb;
+  --color-primary-light: #eff6ff;
+  --color-surface: #ffffff;
+  --color-bg: #f5f7fb;
+  --color-border: #e5e7eb;
+  --color-text-main: #111827;
+  --color-text-sub: #6b7280;
+  --color-error: #dc2626;
+  --color-success: #10b981;
+  --radius-card: 16px;
+  --radius-input: 10px;
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

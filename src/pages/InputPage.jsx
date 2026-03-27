@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useSubmissionStore from '../store/submissionStore'
 import CodeEditor from '../components/editor/CodeEditor'
+import Button from '../components/ui/Button'
 
 function InputPage() {
   const navigate = useNavigate()
@@ -155,13 +156,9 @@ function InputPage() {
           </div>
         ))}
 
-        <button
-          type="button"
-          style={styles.secondaryButton}
-          onClick={handleAddTestCase}
-        >
+        <Button type="button" variant="secondary" onClick={handleAddTestCase} style={{ marginTop: '4px' }}>
           테스트 케이스 추가
-        </button>
+        </Button>
 
         <label style={styles.label}>코드 입력</label>
         <CodeEditor
@@ -170,9 +167,9 @@ function InputPage() {
           onChange={setRawCode}
         />
 
-        <button style={styles.submitButton} type="submit">
+        <Button type="submit" style={{ marginTop: '16px' }}>
           제출하고 분석 페이지로 이동
-        </button>
+        </Button>
       </form>
     </div>
   )
@@ -181,7 +178,7 @@ function InputPage() {
 const styles = {
   page: {
     minHeight: '100vh',
-    backgroundColor: '#f5f7fb',
+    backgroundColor: 'var(--color-bg)',
     padding: '40px 20px',
     display: 'flex',
     justifyContent: 'center',
@@ -189,10 +186,10 @@ const styles = {
   card: {
     width: '100%',
     maxWidth: '760px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     padding: '32px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-card)',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
@@ -204,7 +201,7 @@ const styles = {
   description: {
     marginTop: '4px',
     marginBottom: '12px',
-    color: '#555',
+    color: 'var(--color-text-sub)',
   },
   label: {
     fontSize: '14px',
@@ -215,19 +212,19 @@ const styles = {
     padding: '12px',
     fontSize: '16px',
     border: '1px solid #d0d7de',
-    borderRadius: '10px',
+    borderRadius: 'var(--radius-input)',
   },
   textarea: {
     minHeight: '100px',
     padding: '12px',
     fontSize: '16px',
     border: '1px solid #d0d7de',
-    borderRadius: '10px',
+    borderRadius: 'var(--radius-input)',
     resize: 'vertical',
     fontFamily: 'inherit',
   },
   testCaseBox: {
-    border: '1px solid #e5e7eb',
+    border: '1px solid var(--color-border)',
     borderRadius: '12px',
     padding: '16px',
     display: 'flex',
@@ -239,33 +236,13 @@ const styles = {
     margin: 0,
     fontWeight: '600',
   },
-  secondaryButton: {
-    marginTop: '4px',
-    padding: '12px',
-    border: '1px solid #2563eb',
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    color: '#2563eb',
-    fontSize: '15px',
-    cursor: 'pointer',
-  },
   removeButton: {
     padding: '10px',
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: 'var(--radius-input)',
     backgroundColor: '#ef4444',
     color: 'white',
     fontSize: '14px',
-    cursor: 'pointer',
-  },
-  submitButton: {
-    marginTop: '16px',
-    padding: '14px',
-    border: 'none',
-    borderRadius: '10px',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    fontSize: '16px',
     cursor: 'pointer',
   },
 }

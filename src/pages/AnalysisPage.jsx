@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { submitCodeForAnalysis } from '../services/submissionService'
 import useSubmissionStore from '../store/submissionStore'
+import AstTreeViewer from '../components/ast/AstTreeViewer'
+import Spinner from '../components/ui/Spinner'
+import Button from '../components/ui/Button'
+
+const LOADING_MESSAGES = [
+  '코드를 샌드박스에서 실행 중...',
+  'AST 구조를 분석 중...',
+  '질문을 생성 중...',
+]
 
 function AnalysisPage() {
   const navigate = useNavigate()
@@ -12,6 +21,7 @@ function AnalysisPage() {
 
   const [isLoading, setIsLoading] = useState(!analysisResult)
   const [errorMessage, setErrorMessage] = useState('')
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0)
 
   const hasDraftData = Boolean(
     draft.problem_title.trim() &&
@@ -48,6 +58,18 @@ function AnalysisPage() {
     runAnalysis()
   }, [hasDraftData, analysisResult, draft, setAnalysisResult])
 
+  useEffect(() => {
+    if (!isLoading) return
+
+    const interval = setInterval(() => {
+      setLoadingMessageIndex((prev) =>
+        prev < LOADING_MESSAGES.length - 1 ? prev + 1 : prev
+      )
+    }, 500)
+
+    return () => clearInterval(interval)
+  }, [isLoading])
+
   if (!hasDraftData) {
     return (
       <div style={styles.page}>
@@ -56,9 +78,9 @@ function AnalysisPage() {
           <p style={styles.description}>
             전달된 입력 데이터가 없습니다.
           </p>
-          <button style={styles.button} onClick={() => navigate('/input')}>
+          <Button onClick={() => navigate('/input')}>
             입력 페이지로 돌아가기
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -73,7 +95,10 @@ function AnalysisPage() {
             샌드박스 실행, AST 분석, 질문 생성을 순서대로 진행하고 있습니다.
           </p>
           <div style={styles.loadingBox}>
-            <p style={styles.loadingText}>문제와 코드를 분석하는 중입니다...</p>
+            <Spinner size={32} />
+            <p style={styles.loadingText}>
+              {LOADING_MESSAGES[loadingMessageIndex]}
+            </p>
           </div>
         </div>
       </div>
@@ -86,9 +111,9 @@ function AnalysisPage() {
         <div style={styles.card}>
           <h1 style={styles.title}>분석 실패</h1>
           <p style={styles.errorText}>{errorMessage}</p>
-          <button style={styles.button} onClick={() => navigate('/input')}>
+          <Button onClick={() => navigate('/input')}>
             다시 입력하러 가기
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -130,22 +155,17 @@ function AnalysisPage() {
 
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>AST 구조 예시</h2>
-          <pre style={styles.codeBlock}>
-            {JSON.stringify(analysisResult.ast_structure, null, 2)}
-          </pre>
+          <AstTreeViewer data={analysisResult.ast_structure} />
         </section>
 
         <div style={styles.buttonGroup}>
-          <button style={styles.secondaryButton} onClick={() => navigate('/input')}>
+          <Button variant="secondary" onClick={() => navigate('/input')}>
             다시 입력하기
-          </button>
+          </Button>
 
-          <button
-            style={styles.button}
-            onClick={() => navigate(`/qa/${analysisResult.submission_id}`)}
-          >
+          <Button onClick={() => navigate(`/qa/${analysisResult.submission_id}`)}>
             QA 페이지로 이동
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -155,7 +175,7 @@ function AnalysisPage() {
 const styles = {
   page: {
     minHeight: '100vh',
-    backgroundColor: '#f5f7fb',
+    backgroundColor: 'var(--color-bg)',
     padding: '40px 20px',
     display: 'flex',
     justifyContent: 'center',
@@ -163,10 +183,10 @@ const styles = {
   card: {
     width: '100%',
     maxWidth: '760px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     padding: '32px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-card)',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
@@ -177,10 +197,10 @@ const styles = {
   },
   description: {
     margin: 0,
-    color: '#555',
+    color: 'var(--color-text-sub)',
   },
   section: {
-    borderTop: '1px solid #e5e7eb',
+    borderTop: '1px solid var(--color-border)',
     paddingTop: '16px',
   },
   sectionTitle: {
@@ -189,34 +209,28 @@ const styles = {
   },
   text: {
     margin: '4px 0',
-    color: '#222',
+    color: 'var(--color-text-main)',
   },
   questionBox: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '10px',
+    border: '1px solid var(--color-border)',
+    borderRadius: 'var(--radius-input)',
     padding: '12px',
     backgroundColor: '#fafafa',
     marginBottom: '10px',
   },
-  codeBlock: {
-    backgroundColor: '#111827',
-    color: '#f9fafb',
-    padding: '16px',
-    borderRadius: '10px',
-    overflowX: 'auto',
-    fontFamily: 'monospace',
-    fontSize: '14px',
-    lineHeight: '1.5',
-  },
   loadingBox: {
     marginTop: '12px',
-    padding: '20px',
+    padding: '24px',
     borderRadius: '12px',
-    backgroundColor: '#eff6ff',
+    backgroundColor: 'var(--color-primary-light)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px',
   },
   loadingText: {
     margin: 0,
-    color: '#1d4ed8',
+    color: 'var(--color-primary)',
     fontWeight: '600',
   },
   buttonGroup: {
@@ -224,28 +238,8 @@ const styles = {
     gap: '12px',
     marginTop: '8px',
   },
-  button: {
-    flex: 1,
-    padding: '14px',
-    border: 'none',
-    borderRadius: '10px',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
-  secondaryButton: {
-    flex: 1,
-    padding: '14px',
-    border: '1px solid #2563eb',
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    color: '#2563eb',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
   errorText: {
-    color: '#dc2626',
+    color: 'var(--color-error)',
     fontSize: '14px',
   },
 }
