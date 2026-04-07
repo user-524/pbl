@@ -4,11 +4,9 @@ function TitleBar({
   isAnalyzing,
   onRunAnalysis,
   onToggleReport,
-  onToggleProblem,
   onToggleTestCase,
   onToggleAgent,
   showReport,
-  showProblem,
   showTestCase,
   showAgent,
   workflowStatus,
@@ -33,13 +31,6 @@ function TitleBar({
       {/* 오른쪽: 액션 버튼들 */}
       <div style={styles.right}>
         {/* 토글 버튼들 */}
-        <button
-          style={{ ...styles.toggleBtn, ...(showProblem ? styles.toggleBtnActive : {}) }}
-          onClick={onToggleProblem}
-          title="문제 정보"
-        >
-          문제 정보
-        </button>
         <button
           style={{ ...styles.toggleBtn, ...(showTestCase ? styles.toggleBtnActive : {}) }}
           onClick={onToggleTestCase}

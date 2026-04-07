@@ -1,173 +1,362 @@
 import { useState } from 'react'
 import useSubmissionStore from '../../store/submissionStore.js'
 
-function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
-  const qaAnswers = useSubmissionStore((s) => s.qaAnswers)
-  const setQaAnswer = useSubmissionStore((s) => s.setQaAnswer)
+function ProblemInfoPanel({ onClose }) {
+  const draft = useSubmissionStore((s) => s.draft)
+  const setDraft = useSubmissionStore((s) => s.setDraft)
 
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  const questions = analysisResult?.generated_questions ?? []
-
-  if (questions.length === 0) {
-    return (
-      <div style={styles.empty}>
-        <div style={styles.emptyIcon}>💬</div>
-        <p style={styles.emptyTitle}>Q&A 세션</p>
-        <p style={styles.emptyText}>
-          코드를 작성하고 상단의 <strong style={styles.strong}>▶ 실행</strong> 버튼을 눌러
-          분석을 시작하면 질문이 생성됩니다.
-        </p>
-      </div>
-    )
+  const handleChange = (field, value) => {
+    setDraft({ ...draft, [field]: value })
   }
 
-  const current = questions[currentIndex]
-  const isFirst = currentIndex === 0
-  const isLast = currentIndex === questions.length - 1
-
   return (
-    <div style={styles.container}>
-      {/* 헤더 */}
-      <div style={styles.header}>
-        <span style={styles.headerTitle}>질문 & 답변</span>
-        <span style={styles.headerCount}>
-          {currentIndex + 1} / {questions.length}
-        </span>
+    <div style={styles.problemPanel}>
+      <div style={styles.problemHeader}>
+        <span style={styles.problemTitle}>문제 정보</span>
+        <button style={styles.problemCloseBtn} onClick={onClose}>✕</button>
       </div>
-
-      {/* 질문 목록 네비게이션 */}
-      <div style={styles.questionNav}>
-        {questions.map((q, i) => {
-          const answered = qaAnswers[q.question_id]?.trim()
-          return (
-            <button
-              key={i}
-              style={{
-                ...styles.navDot,
-                ...(i === currentIndex ? styles.navDotActive : {}),
-                ...(answered && i !== currentIndex ? styles.navDotAnswered : {}),
-              }}
-              onClick={() => setCurrentIndex(i)}
-              title={`질문 ${i + 1}`}
-            >
-              {i + 1}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* 현재 질문 */}
-      <div style={styles.questionBox}>
-        <div style={styles.questionMeta}>
-          <span style={styles.qType}>{current.type}</span>
-          <span style={styles.qNum}>Q{currentIndex + 1}</span>
+      <div style={styles.problemBody}>
+        <div style={styles.problemField}>
+          <label style={styles.fieldLabel}>문제 제목</label>
+          <input
+            style={styles.fieldInput}
+            type="text"
+            placeholder="예: 피보나치 수열"
+            value={draft.problem_title}
+            onChange={(e) => handleChange('problem_title', e.target.value)}
+          />
         </div>
-        <p style={styles.qText}>{current.text}</p>
-      </div>
-
-      {/* 답변 입력 */}
-      <div style={styles.answerSection}>
-        <label style={styles.answerLabel}>내 답변</label>
-        <textarea
-          style={styles.textarea}
-          placeholder="질문에 대한 설명을 작성해보세요..."
-          value={qaAnswers[current.question_id] || ''}
-          onChange={(e) => setQaAnswer(current.question_id, e.target.value)}
-        />
-      </div>
-
-      {errorMessage && <p style={styles.error}>{errorMessage}</p>}
-
-      {/* 이전/다음/제출 버튼 */}
-      <div style={styles.btnRow}>
-        <button
-          style={{
-            ...styles.navBtn,
-            opacity: isFirst ? 0.4 : 1,
-            cursor: isFirst ? 'not-allowed' : 'pointer',
-          }}
-          onClick={() => !isFirst && setCurrentIndex((p) => p - 1)}
-          disabled={isFirst}
-        >
-          ← 이전
-        </button>
-
-        {!isLast ? (
-          <button
-            style={styles.nextBtn}
-            onClick={() => setCurrentIndex((p) => p + 1)}
+        <div style={styles.problemField}>
+          <label style={styles.fieldLabel}>문제 설명</label>
+          <textarea
+            style={styles.fieldTextarea}
+            placeholder="예: N번째 피보나치 수를 구하는 함수를 작성하시오."
+            value={draft.problem_description}
+            onChange={(e) => handleChange('problem_description', e.target.value)}
+          />
+        </div>
+        <div style={styles.problemField}>
+          <label style={styles.fieldLabel}>언어</label>
+          <select
+            style={styles.fieldInput}
+            value={draft.language}
+            onChange={(e) => handleChange('language', e.target.value)}
           >
-            다음 →
-          </button>
-        ) : (
-          <button
-            style={{
-              ...styles.submitBtn,
-              opacity: isSubmitting ? 0.6 : 1,
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            }}
-            onClick={onSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <span style={styles.spinner} />
-                채점 중...
-              </>
-            ) : (
-              '✓ 답변 제출'
-            )}
-          </button>
-        )}
-      </div>
-
-      {/* 전체 질문 요약 */}
-      <div style={styles.summary}>
-        <p style={styles.summaryTitle}>전체 질문 목록</p>
-        {questions.map((q, i) => (
-          <div
-            key={i}
-            style={{
-              ...styles.summaryItem,
-              ...(i === currentIndex ? styles.summaryItemActive : {}),
-            }}
-            onClick={() => setCurrentIndex(i)}
-          >
-            <span style={styles.summaryNum}>Q{i + 1}</span>
-            <span style={styles.summaryType}>[{q.type}]</span>
-            <span style={styles.summaryText}>{q.text}</span>
-            {qaAnswers[q.question_id]?.trim() && (
-              <span style={styles.answeredBadge}>✓</span>
-            )}
-          </div>
-        ))}
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="java">Java</option>
+          </select>
+        </div>
       </div>
     </div>
   )
 }
 
+function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
+  const qaAnswers = useSubmissionStore((s) => s.qaAnswers)
+  const setQaAnswer = useSubmissionStore((s) => s.setQaAnswer)
+
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [showProblemInfo, setShowProblemInfo] = useState(false)
+
+  const questions = analysisResult?.generated_questions ?? []
+
+  const qaContent = questions.length === 0 ? (
+    <div style={styles.empty}>
+      <div style={styles.emptyIcon}>💬</div>
+      <p style={styles.emptyTitle}>Q&A 세션</p>
+      <p style={styles.emptyText}>
+        코드를 작성하고 상단의 <strong style={styles.strong}>▶ 실행</strong> 버튼을 눌러
+        분석을 시작하면 질문이 생성됩니다.
+      </p>
+    </div>
+  ) : (() => {
+    const current = questions[currentIndex]
+    const isFirst = currentIndex === 0
+    const isLast = currentIndex === questions.length - 1
+
+    return (
+      <div style={styles.qaContent}>
+        {/* 헤더 */}
+        <div style={styles.header}>
+          <span style={styles.headerTitle}>질문 & 답변</span>
+          <span style={styles.headerCount}>
+            {currentIndex + 1} / {questions.length}
+          </span>
+        </div>
+
+        {/* 질문 목록 네비게이션 */}
+        <div style={styles.questionNav}>
+          {questions.map((q, i) => {
+            const answered = qaAnswers[q.question_id]?.trim()
+            return (
+              <button
+                key={i}
+                style={{
+                  ...styles.navDot,
+                  ...(i === currentIndex ? styles.navDotActive : {}),
+                  ...(answered && i !== currentIndex ? styles.navDotAnswered : {}),
+                }}
+                onClick={() => setCurrentIndex(i)}
+                title={`질문 ${i + 1}`}
+              >
+                {i + 1}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* 현재 질문 */}
+        <div style={styles.questionBox}>
+          <div style={styles.questionMeta}>
+            <span style={styles.qType}>{current.type}</span>
+            <span style={styles.qNum}>Q{currentIndex + 1}</span>
+          </div>
+          <p style={styles.qText}>{current.text}</p>
+        </div>
+
+        {/* 답변 입력 */}
+        <div style={styles.answerSection}>
+          <label style={styles.answerLabel}>내 답변</label>
+          <textarea
+            style={styles.textarea}
+            placeholder="질문에 대한 설명을 작성해보세요..."
+            value={qaAnswers[current.question_id] || ''}
+            onChange={(e) => setQaAnswer(current.question_id, e.target.value)}
+          />
+        </div>
+
+        {errorMessage && <p style={styles.error}>{errorMessage}</p>}
+
+        {/* 이전/다음/제출 버튼 */}
+        <div style={styles.btnRow}>
+          <button
+            style={{
+              ...styles.navBtn,
+              opacity: isFirst ? 0.4 : 1,
+              cursor: isFirst ? 'not-allowed' : 'pointer',
+            }}
+            onClick={() => !isFirst && setCurrentIndex((p) => p - 1)}
+            disabled={isFirst}
+          >
+            ← 이전
+          </button>
+
+          {!isLast ? (
+            <button
+              style={styles.nextBtn}
+              onClick={() => setCurrentIndex((p) => p + 1)}
+            >
+              다음 →
+            </button>
+          ) : (
+            <button
+              style={{
+                ...styles.submitBtn,
+                opacity: isSubmitting ? 0.6 : 1,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              }}
+              onClick={onSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span style={styles.spinner} />
+                  채점 중...
+                </>
+              ) : (
+                '✓ 답변 제출'
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* 전체 질문 요약 */}
+        <div style={styles.summary}>
+          <p style={styles.summaryTitle}>전체 질문 목록</p>
+          {questions.map((q, i) => (
+            <div
+              key={i}
+              style={{
+                ...styles.summaryItem,
+                ...(i === currentIndex ? styles.summaryItemActive : {}),
+              }}
+              onClick={() => setCurrentIndex(i)}
+            >
+              <span style={styles.summaryNum}>Q{i + 1}</span>
+              <span style={styles.summaryType}>[{q.type}]</span>
+              <span style={styles.summaryText}>{q.text}</span>
+              {qaAnswers[q.question_id]?.trim() && (
+                <span style={styles.answeredBadge}>✓</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  })()
+
+  return (
+    <div style={styles.wrapper}>
+      {/* Q&A 메인 영역 */}
+      <div style={{ ...styles.qaArea, flex: showProblemInfo ? '0 0 50%' : 1 }}>
+        {qaContent}
+      </div>
+
+      {/* 문제 정보 토글 탭 */}
+      <div style={styles.toggleBar}>
+        <button
+          style={{
+            ...styles.toggleBtn,
+            ...(showProblemInfo ? styles.toggleBtnActive : {}),
+          }}
+          onClick={() => setShowProblemInfo((p) => !p)}
+        >
+          {showProblemInfo ? '▼' : '▲'} 문제 정보
+        </button>
+      </div>
+
+      {/* 문제 정보 패널 (하단 50%) */}
+      {showProblemInfo && (
+        <div style={styles.problemWrapper}>
+          <ProblemInfoPanel onClose={() => setShowProblemInfo(false)} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 const styles = {
-  container: {
+  wrapper: {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
     backgroundColor: 'var(--color-ide-sidebar)',
   },
-  empty: {
+  qaArea: {
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+  },
+  qaContent: {
     height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  toggleBar: {
+    flexShrink: 0,
+    borderTop: '1px solid var(--color-ide-border)',
+    backgroundColor: 'var(--color-ide-titlebar)',
+    padding: '0',
+  },
+  toggleBtn: {
+    width: '100%',
+    padding: '7px 16px',
+    background: 'none',
+    border: 'none',
+    color: 'var(--color-ide-text-dim)',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textAlign: 'left',
+    letterSpacing: '0.3px',
+  },
+  toggleBtnActive: {
+    color: '#007acc',
+    backgroundColor: 'var(--color-ide-active)',
+  },
+  problemWrapper: {
+    flex: '0 0 50%',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    borderTop: '1px solid var(--color-ide-border)',
+  },
+  problemPanel: {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    backgroundColor: '#252526',
+  },
+  problemHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '8px 16px',
+    borderBottom: '1px solid var(--color-ide-border)',
+    flexShrink: 0,
+  },
+  problemTitle: {
+    color: 'var(--color-ide-text)',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
+  problemCloseBtn: {
+    background: 'none',
+    border: 'none',
+    color: 'var(--color-ide-text-dim)',
+    cursor: 'pointer',
+    fontSize: '14px',
+    padding: '2px 4px',
+    lineHeight: 1,
+  },
+  problemBody: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '12px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  problemField: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  fieldLabel: {
+    color: 'var(--color-ide-text-dim)',
+    fontSize: '11px',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  fieldInput: {
+    padding: '6px 10px',
+    fontSize: '13px',
+    backgroundColor: '#3c3c3c',
+    border: '1px solid var(--color-ide-border)',
+    borderRadius: '4px',
+    color: 'var(--color-ide-text)',
+    height: '34px',
+    boxSizing: 'border-box',
+  },
+  fieldTextarea: {
+    padding: '6px 10px',
+    fontSize: '13px',
+    backgroundColor: '#3c3c3c',
+    border: '1px solid var(--color-ide-border)',
+    borderRadius: '4px',
+    color: 'var(--color-ide-text)',
+    height: '72px',
+    resize: 'none',
+    fontFamily: 'inherit',
+    lineHeight: '1.5',
+    boxSizing: 'border-box',
+  },
+  empty: {
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '24px',
-    backgroundColor: 'var(--color-ide-sidebar)',
     gap: '12px',
   },
-  emptyIcon: {
-    fontSize: '40px',
-  },
+  emptyIcon: { fontSize: '40px' },
   emptyTitle: {
     color: 'var(--color-ide-text)',
     fontSize: '16px',
@@ -181,9 +370,7 @@ const styles = {
     lineHeight: '1.6',
     margin: 0,
   },
-  strong: {
-    color: '#4ec9b0',
-  },
+  strong: { color: '#4ec9b0' },
   header: {
     display: 'flex',
     alignItems: 'center',
