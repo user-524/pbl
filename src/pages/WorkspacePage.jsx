@@ -6,7 +6,6 @@ import StatusBar from '../components/layout/StatusBar.jsx'
 import QASection from '../components/panels/QASection.jsx'
 import ReportOverlay from '../components/panels/ReportOverlay.jsx'
 import AgentPanel from '../components/panels/AgentPanel.jsx'
-import ProblemDrawer from '../components/panels/ProblemDrawer.jsx'
 import TestCaseDrawer from '../components/panels/TestCaseDrawer.jsx'
 import { parseCodeToAst } from '../utils/simpleAstParser.js'
 import AstTreeViewer from '../components/ast/AstTreeViewer.jsx'
@@ -37,7 +36,6 @@ function WorkspacePage() {
   // 패널 토글 상태
   const [showReport, setShowReport] = useState(false)
   const [showAgent, setShowAgent] = useState(false)
-  const [showProblem, setShowProblem] = useState(false)
   const [showTestCase, setShowTestCase] = useState(false)
 
   // 에디터 분할 (좌우)
@@ -95,7 +93,6 @@ function WorkspacePage() {
   // 분석 실행
   const handleRunAnalysis = async () => {
     if (!draft.problem_title.trim() || !draft.raw_code.trim()) {
-      setShowProblem(true)
       return
     }
     try {
@@ -184,17 +181,9 @@ function WorkspacePage() {
       isAnalyzing={isAnalyzing}
       onRunAnalysis={handleRunAnalysis}
       onToggleReport={() => setShowReport((p) => !p)}
-      onToggleProblem={() => {
-        setShowProblem((p) => !p)
-        setShowTestCase(false)
-      }}
-      onToggleTestCase={() => {
-        setShowTestCase((p) => !p)
-        setShowProblem(false)
-      }}
+      onToggleTestCase={() => setShowTestCase((p) => !p)}
       onToggleAgent={() => setShowAgent((p) => !p)}
       showReport={showReport}
-      showProblem={showProblem}
       showTestCase={showTestCase}
       showAgent={showAgent}
       workflowStatus={workflowStatus}
@@ -213,9 +202,6 @@ function WorkspacePage() {
           style={{ ...styles.main, cursor: isDragging ? 'col-resize' : 'default' }}
         >
           {/* 드로어들 (absolute, 주 영역 위에 표시) */}
-          {showProblem && (
-            <ProblemDrawer onClose={() => setShowProblem(false)} />
-          )}
           {showTestCase && (
             <TestCaseDrawer onClose={() => setShowTestCase(false)} />
           )}
