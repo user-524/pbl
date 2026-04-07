@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { loginUser } from '../services/authService'
+import Button from '../components/ui/Button'
 
 function LoginPage() {
   const [username, setUsername] = useState('admin')
@@ -29,7 +30,7 @@ function LoginPage() {
 
       if (data.success && data.access_token) {
         localStorage.setItem('access_token', data.access_token)
-        navigate('/input')
+        navigate('/workspace')
       } else {
         setErrorMessage(data.message || '로그인에 실패했습니다.')
       }
@@ -43,7 +44,7 @@ function LoginPage() {
 
   const handleDemoStart = () => {
     localStorage.setItem('access_token', 'test-admin-token')
-    navigate('/input')
+    navigate('/workspace')
   }
 
   return (
@@ -72,25 +73,13 @@ function LoginPage() {
 
         {errorMessage && <p style={styles.errorText}>{errorMessage}</p>}
 
-        <button
-          style={{
-            ...styles.button,
-            opacity: isLoading ? 0.7 : 1,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-          }}
-          type="submit"
-          disabled={isLoading}
-        >
+        <Button type="submit" isLoading={isLoading} style={{ marginTop: '12px' }}>
           {isLoading ? '로그인 중...' : '실제 로그인 시도'}
-        </button>
+        </Button>
 
-        <button
-          type="button"
-          style={styles.secondaryButton}
-          onClick={handleDemoStart}
-        >
+        <Button type="button" variant="secondary" onClick={handleDemoStart}>
           백엔드 없이 시연용 시작
-        </button>
+        </Button>
 
         <p style={styles.helpText}>
           시연 계정: admin / password123
@@ -106,15 +95,15 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f7fb',
+    backgroundColor: 'var(--color-bg)',
   },
   card: {
     width: '100%',
     maxWidth: '420px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-surface)',
     padding: '32px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-card)',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
@@ -126,7 +115,7 @@ const styles = {
   description: {
     marginTop: '4px',
     marginBottom: '12px',
-    color: '#555',
+    color: 'var(--color-text-sub)',
   },
   label: {
     fontSize: '14px',
@@ -136,34 +125,16 @@ const styles = {
     padding: '12px',
     fontSize: '16px',
     border: '1px solid #d0d7de',
-    borderRadius: '10px',
-  },
-  button: {
-    marginTop: '12px',
-    padding: '14px',
-    border: 'none',
-    borderRadius: '10px',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    fontSize: '16px',
-  },
-  secondaryButton: {
-    padding: '14px',
-    border: '1px solid #2563eb',
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    color: '#2563eb',
-    fontSize: '16px',
-    cursor: 'pointer',
+    borderRadius: 'var(--radius-input)',
   },
   helpText: {
     marginTop: '8px',
     fontSize: '13px',
-    color: '#666',
+    color: 'var(--color-text-sub)',
   },
   errorText: {
     margin: '4px 0 0 0',
-    color: '#dc2626',
+    color: 'var(--color-error)',
     fontSize: '14px',
   },
 }
