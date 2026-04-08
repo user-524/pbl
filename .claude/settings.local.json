@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/btj10/Documents/GitHub/pbl/src/components -type f -name *.jsx -o -name *.js)",
+      "Bash(grep -E \"\\\\.env|config|\\\\.js$|\\\\.json$\")"
+    ]
+  }
+}

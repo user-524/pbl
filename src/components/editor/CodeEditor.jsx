@@ -1,13 +1,13 @@
 import Editor from '@monaco-editor/react'
 
-function CodeEditor({ language, value, onChange }) {
+function CodeEditor({ language, value, onChange, readOnly = false, height = '320px' }) {
   return (
     <div style={styles.wrapper}>
       <Editor
-        height="320px"
+        height={height}
         language={language}
         value={value}
-        onChange={(newValue) => onChange(newValue || '')}
+        onChange={readOnly ? undefined : (newValue) => onChange(newValue || '')}
         theme="vs-dark"
         options={{
           minimap: { enabled: false },
@@ -18,6 +18,7 @@ function CodeEditor({ language, value, onChange }) {
           automaticLayout: true,
           wordWrap: 'on',
           tabSize: 2,
+          readOnly,
         }}
       />
     </div>
