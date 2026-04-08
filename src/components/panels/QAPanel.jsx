@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import useSubmissionStore from '../../store/submissionStore.js'
 import Button from '../ui/Button.jsx'
-import Spinner from '../ui/Spinner.jsx'
 
 function QAPanel({ onSubmit, isSubmitting, errorMessage }) {
   const analysisResult = useSubmissionStore((s) => s.analysisResult)

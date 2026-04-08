@@ -1,7 +1,6 @@
 import useSubmissionStore from '../../store/submissionStore.js'
-import Button from '../ui/Button.jsx'
 
-function ProblemInfoPanel({ onRunAnalysis, isAnalyzing }) {
+function ProblemDrawer({ onClose }) {
   const draft = useSubmissionStore((s) => s.draft)
   const setDraft = useSubmissionStore((s) => s.setDraft)
 
@@ -10,8 +9,12 @@ function ProblemInfoPanel({ onRunAnalysis, isAnalyzing }) {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.row}>
+    <div style={styles.drawer}>
+      <div style={styles.header}>
+        <span style={styles.title}>문제 정보</span>
+        <button style={styles.closeBtn} onClick={onClose}>✕</button>
+      </div>
+      <div style={styles.body}>
         <div style={styles.field}>
           <label style={styles.label}>문제 제목</label>
           <input
@@ -22,17 +25,16 @@ function ProblemInfoPanel({ onRunAnalysis, isAnalyzing }) {
             onChange={(e) => handleChange('problem_title', e.target.value)}
           />
         </div>
-        <div style={styles.fieldWide}>
+        <div style={styles.field}>
           <label style={styles.label}>문제 설명</label>
-          <input
-            style={styles.input}
-            type="text"
+          <textarea
+            style={styles.textarea}
             placeholder="예: N번째 피보나치 수를 구하는 함수를 작성하시오."
             value={draft.problem_description}
             onChange={(e) => handleChange('problem_description', e.target.value)}
           />
         </div>
-        <div style={styles.fieldNarrow}>
+        <div style={styles.field}>
           <label style={styles.label}>언어</label>
           <select
             style={styles.input}
@@ -44,31 +46,46 @@ function ProblemInfoPanel({ onRunAnalysis, isAnalyzing }) {
             <option value="java">Java</option>
           </select>
         </div>
-        <div style={styles.btnArea}>
-          <Button
-            onClick={onRunAnalysis}
-            isLoading={isAnalyzing}
-            disabled={isAnalyzing}
-            style={{ whiteSpace: 'nowrap', height: '36px' }}
-          >
-            {isAnalyzing ? '분석 중...' : '▶ 분석 실행'}
-          </Button>
-        </div>
       </div>
     </div>
   )
 }
 
 const styles = {
-  container: {
-    padding: '10px 16px',
-    height: '100%',
-    overflowY: 'auto',
-    boxSizing: 'border-box',
+  drawer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#252526',
+    borderBottom: '1px solid var(--color-ide-border)',
+    zIndex: 100,
+    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
   },
-  row: {
+  header: {
     display: 'flex',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 16px',
+    borderBottom: '1px solid var(--color-ide-border)',
+  },
+  title: {
+    color: 'var(--color-ide-text)',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    color: 'var(--color-ide-text-dim)',
+    cursor: 'pointer',
+    fontSize: '14px',
+    padding: '2px 6px',
+    lineHeight: 1,
+  },
+  body: {
+    padding: '12px 16px',
+    display: 'flex',
     gap: '12px',
     flexWrap: 'wrap',
   },
@@ -76,21 +93,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
-    minWidth: '160px',
     flex: 1,
-  },
-  fieldWide: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    flex: 2,
-    minWidth: '200px',
-  },
-  fieldNarrow: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    width: '130px',
+    minWidth: '180px',
   },
   label: {
     color: 'var(--color-ide-text-dim)',
@@ -106,13 +110,21 @@ const styles = {
     border: '1px solid var(--color-ide-border)',
     borderRadius: '4px',
     color: 'var(--color-ide-text)',
-    height: '36px',
+    height: '34px',
     boxSizing: 'border-box',
   },
-  btnArea: {
-    display: 'flex',
-    alignItems: 'flex-end',
+  textarea: {
+    padding: '6px 10px',
+    fontSize: '13px',
+    backgroundColor: '#3c3c3c',
+    border: '1px solid var(--color-ide-border)',
+    borderRadius: '4px',
+    color: 'var(--color-ide-text)',
+    height: '60px',
+    resize: 'none',
+    fontFamily: 'inherit',
+    lineHeight: '1.4',
   },
 }
 
-export default ProblemInfoPanel
+export default ProblemDrawer

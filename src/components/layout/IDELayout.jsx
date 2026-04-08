@@ -1,15 +1,11 @@
-import TitleBar from './TitleBar.jsx'
 import StatusBar from './StatusBar.jsx'
 
-function IDELayout({ sidebar, children, language, workflowStatus, totalScore }) {
+function IDELayout({ children, language, workflowStatus, totalScore, titleBar }) {
   return (
     <div style={styles.root}>
-      <TitleBar />
-      <div style={styles.middle}>
-        {sidebar}
-        <div style={styles.mainArea}>
-          {children}
-        </div>
+      {titleBar}
+      <div style={styles.mainArea}>
+        {children}
       </div>
       <StatusBar
         language={language}
@@ -28,16 +24,11 @@ const styles = {
     backgroundColor: 'var(--color-ide-bg)',
     overflow: 'hidden',
   },
-  middle: {
-    flex: 1,
-    display: 'flex',
-    overflow: 'hidden',
-  },
   mainArea: {
     flex: 1,
     display: 'flex',
-    flexDirection: 'column',
     overflow: 'hidden',
+    position: 'relative',
   },
 }
 
