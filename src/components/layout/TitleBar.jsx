@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useLogout } from '../../hooks/useAuth.js'
 
 function TitleBar({
   isAnalyzing,
@@ -12,9 +13,10 @@ function TitleBar({
   workflowStatus,
 }) {
   const navigate = useNavigate()
+  const clearToken = useLogout()
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token')
+    clearToken()
     navigate('/login')
   }
 

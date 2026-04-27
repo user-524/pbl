@@ -74,6 +74,7 @@ function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
     const current = questions[currentIndex]
     const isFirst = currentIndex === 0
     const isLast = currentIndex === questions.length - 1
+    const choices = current.choices ?? []
 
     return (
       <div style={styles.qaContent}>
@@ -88,7 +89,7 @@ function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
         {/* 질문 목록 네비게이션 */}
         <div style={styles.questionNav}>
           {questions.map((q, i) => {
-            const answered = qaAnswers[q.question_id]?.trim()
+            const answered = qaAnswers[q.question_id] != null
             return (
               <button
                 key={i}
@@ -115,15 +116,35 @@ function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
           <p style={styles.qText}>{current.text}</p>
         </div>
 
-        {/* 답변 입력 */}
+        {/* 라디오 버튼 선택지 */}
         <div style={styles.answerSection}>
-          <label style={styles.answerLabel}>내 답변</label>
-          <textarea
-            style={styles.textarea}
-            placeholder="질문에 대한 설명을 작성해보세요..."
-            value={qaAnswers[current.question_id] || ''}
-            onChange={(e) => setQaAnswer(current.question_id, e.target.value)}
-          />
+          <label style={styles.answerLabel}>선택지</label>
+          {choices.length === 0 ? (
+            <p style={styles.noChoices}>객관식 옵션이 제공되지 않았습니다.</p>
+          ) : (
+            <div style={styles.choiceList}>
+              {choices.map((choice) => {
+                const selected = qaAnswers[current.question_id] === choice.number
+                return (
+                  <label
+                    key={choice.number}
+                    style={{ ...styles.choiceLabel, ...(selected ? styles.choiceLabelSelected : {}) }}
+                  >
+                    <input
+                      type="radio"
+                      name={`question-${current.question_id}`}
+                      value={choice.number}
+                      checked={selected}
+                      onChange={() => setQaAnswer(current.question_id, choice.number)}
+                      style={styles.radioInput}
+                    />
+                    <span style={styles.choiceNumber}>{choice.number + 1}.</span>
+                    <span style={styles.choiceText}>{choice.text}</span>
+                  </label>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {errorMessage && <p style={styles.error}>{errorMessage}</p>}
@@ -186,7 +207,7 @@ function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
               <span style={styles.summaryNum}>Q{i + 1}</span>
               <span style={styles.summaryType}>[{q.type}]</span>
               <span style={styles.summaryText}>{q.text}</span>
-              {qaAnswers[q.question_id]?.trim() && (
+              {qaAnswers[q.question_id] != null && (
                 <span style={styles.answeredBadge}>✓</span>
               )}
             </div>
@@ -198,12 +219,10 @@ function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
 
   return (
     <div style={styles.wrapper}>
-      {/* Q&A 메인 영역 */}
       <div style={{ ...styles.qaArea, flex: showProblemInfo ? '0 0 50%' : 1 }}>
         {qaContent}
       </div>
 
-      {/* 문제 정보 토글 탭 */}
       <div style={styles.toggleBar}>
         <button
           style={{
@@ -216,7 +235,6 @@ function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
         </button>
       </div>
 
-      {/* 문제 정보 패널 (하단 50%) */}
       {showProblemInfo && (
         <div style={styles.problemWrapper}>
           <ProblemInfoPanel onClose={() => setShowProblemInfo(false)} />
@@ -463,17 +481,48 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
   },
-  textarea: {
-    height: '100px',
-    padding: '8px 10px',
+  noChoices: {
+    color: 'var(--color-ide-text-dim)',
     fontSize: '13px',
-    backgroundColor: '#3c3c3c',
-    border: '1px solid var(--color-ide-border)',
+    margin: 0,
+    fontStyle: 'italic',
+  },
+  choiceList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  choiceLabel: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '8px',
+    padding: '8px 10px',
     borderRadius: '4px',
+    border: '1px solid var(--color-ide-border)',
+    backgroundColor: '#3c3c3c',
+    cursor: 'pointer',
     color: 'var(--color-ide-text)',
-    resize: 'none',
-    fontFamily: 'inherit',
-    lineHeight: '1.5',
+    fontSize: '13px',
+    lineHeight: '1.4',
+  },
+  choiceLabelSelected: {
+    backgroundColor: '#094771',
+    borderColor: '#007acc',
+  },
+  radioInput: {
+    marginTop: '2px',
+    flexShrink: 0,
+    accentColor: '#007acc',
+  },
+  choiceNumber: {
+    color: '#007acc',
+    fontWeight: '700',
+    flexShrink: 0,
+    fontSize: '12px',
+    minWidth: '18px',
+  },
+  choiceText: {
+    flex: 1,
   },
   error: {
     color: '#f44747',

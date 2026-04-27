@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loginUser } from '../services/authService'
+import { useLogin } from '../hooks/useAuth.js'
+import useAuthStore from '../store/authStore.js'
 import Button from '../components/ui/Button'
 
 function LoginPage() {
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('password123')
-  const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
   const navigate = useNavigate()
+  const { mutate: doLogin, isPending } = useLogin()
+  const setAuth = useAuthStore((s) => s.setAuth)
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault()
     setErrorMessage('')
 
@@ -20,30 +22,22 @@ function LoginPage() {
       return
     }
 
-    try {
-      setIsLoading(true)
-
-      const data = await loginUser({
-        username,
-        password,
-      })
-
-      if (data.success && data.access_token) {
-        localStorage.setItem('access_token', data.access_token)
-        navigate('/workspace')
-      } else {
-        setErrorMessage(data.message || '로그인에 실패했습니다.')
-      }
-    } catch (error) {
-      setErrorMessage('로그인 요청 중 오류가 발생했습니다.')
-      console.error(error)
-    } finally {
-      setIsLoading(false)
-    }
+    doLogin({ username, password }, {
+      onSuccess: () => navigate('/workspace'),
+      onError: (err) => {
+        if (err.code === 'UNAUTHORIZED') {
+          setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.')
+        } else if (err.code === 'NETWORK_ERROR') {
+          setErrorMessage('서버에 연결할 수 없습니다.')
+        } else {
+          setErrorMessage(err.message || '로그인에 실패했습니다.')
+        }
+      },
+    })
   }
 
   const handleDemoStart = () => {
-    localStorage.setItem('access_token', 'test-admin-token')
+    setAuth({ token: 'test-admin-token', username: 'demo' })
     navigate('/workspace')
   }
 
@@ -73,8 +67,8 @@ function LoginPage() {
 
         {errorMessage && <p style={styles.errorText}>{errorMessage}</p>}
 
-        <Button type="submit" isLoading={isLoading} style={{ marginTop: '12px' }}>
-          {isLoading ? '로그인 중...' : '실제 로그인 시도'}
+        <Button type="submit" isLoading={isPending} style={{ marginTop: '12px' }}>
+          {isPending ? '로그인 중...' : '실제 로그인 시도'}
         </Button>
 
         <Button type="button" variant="secondary" onClick={handleDemoStart}>

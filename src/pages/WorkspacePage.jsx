@@ -10,46 +10,41 @@ import TestCaseDrawer from '../components/panels/TestCaseDrawer.jsx'
 import { parseCodeToAst } from '../utils/simpleAstParser.js'
 import AstTreeViewer from '../components/ast/AstTreeViewer.jsx'
 import useSubmissionStore from '../store/submissionStore.js'
-import { submitCodeForAnalysis } from '../services/submissionService.js'
-import { submitAnswersForEvaluation } from '../services/qaService.js'
-import { getReportById } from '../services/reportService.js'
+import { useCreateSubmission, useSubmitAnswers } from '../hooks/useSubmissions.js'
+import { useReport } from '../hooks/useReports.js'
 
 function WorkspacePage() {
   const draft = useSubmissionStore((s) => s.draft)
   const setDraft = useSubmissionStore((s) => s.setDraft)
   const analysisResult = useSubmissionStore((s) => s.analysisResult)
-  const setAnalysisResult = useSubmissionStore((s) => s.setAnalysisResult)
   const clearAnalysisResult = useSubmissionStore((s) => s.clearAnalysisResult)
   const qaAnswers = useSubmissionStore((s) => s.qaAnswers)
   const initializeQaAnswers = useSubmissionStore((s) => s.initializeQaAnswers)
   const clearQaAnswers = useSubmissionStore((s) => s.clearQaAnswers)
 
-  // 워크플로우 상태
   const [workflowStatus, setWorkflowStatus] = useState('idle')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [qaErrorMessage, setQaErrorMessage] = useState('')
-  const [reportData, setReportData] = useState(null)
   const [submissionId, setSubmissionId] = useState(null)
+  const [reportId, setReportId] = useState(null)
   const [totalScore, setTotalScore] = useState(null)
 
-  // 패널 토글 상태
   const [showReport, setShowReport] = useState(false)
   const [showAgent, setShowAgent] = useState(false)
   const [showTestCase, setShowTestCase] = useState(false)
 
-  // 에디터 분할 (좌우)
   const containerRef = useRef(null)
-  const [splitRatio, setSplitRatio] = useState(55) // 코드 에디터 비율 %
+  const [splitRatio, setSplitRatio] = useState(55)
   const [isDragging, setIsDragging] = useState(false)
   const editorRef = useRef(null)
 
-  // AST 토글
   const [showAst, setShowAst] = useState(false)
   const [astData, setAstData] = useState(null)
   const debounceTimer = useRef(null)
 
-  // 코드 변경 시 AST 갱신
+  const { mutate: createSubmission, isPending: isAnalyzing } = useCreateSubmission()
+  const { mutate: doSubmitAnswers, isPending: isSubmitting } = useSubmitAnswers(submissionId)
+  const { data: reportData } = useReport(reportId, { enabled: !!reportId })
+
   useEffect(() => {
     if (!showAst) return
     clearTimeout(debounceTimer.current)
@@ -59,7 +54,6 @@ function WorkspacePage() {
     return () => clearTimeout(debounceTimer.current)
   }, [draft.raw_code, draft.language, showAst])
 
-  // 드래그 분할
   const handleDividerMouseDown = (e) => {
     e.preventDefault()
     setIsDragging(true)
@@ -85,71 +79,66 @@ function WorkspacePage() {
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
 
-  // 코드 변경
   const handleCodeChange = (newCode) => {
     setDraft({ ...draft, raw_code: newCode || '' })
   }
 
-  // 분석 실행
-  const handleRunAnalysis = async () => {
-    if (!draft.problem_title.trim() || !draft.raw_code.trim()) {
-      return
-    }
-    try {
-      setIsAnalyzing(true)
-      setWorkflowStatus('analyzing')
-      clearAnalysisResult()
-      clearQaAnswers()
-      setReportData(null)
-      setTotalScore(null)
-      setQaErrorMessage('')
+  const handleRunAnalysis = () => {
+    if (!draft.problem_title.trim() || !draft.raw_code.trim()) return
 
-      const result = await submitCodeForAnalysis(draft)
-      setAnalysisResult(result)
-      setSubmissionId(result.submission_id)
-      initializeQaAnswers(result.generated_questions)
-      setWorkflowStatus('qa')
-    } catch (err) {
-      console.error(err)
-      setWorkflowStatus('idle')
-    } finally {
-      setIsAnalyzing(false)
-    }
+    clearAnalysisResult()
+    clearQaAnswers()
+    setReportId(null)
+    setTotalScore(null)
+    setQaErrorMessage('')
+    setWorkflowStatus('analyzing')
+
+    createSubmission(
+      {
+        problem_title: draft.problem_title,
+        problem_description: draft.problem_description,
+        language: draft.language,
+        raw_code: draft.raw_code,
+      },
+      {
+        onSuccess: (result) => {
+          setSubmissionId(result.submission_id)
+          initializeQaAnswers(result.generated_questions)
+          setWorkflowStatus('qa')
+        },
+        onError: () => setWorkflowStatus('idle'),
+      }
+    )
   }
 
-  // QA 제출
-  const handleSubmitQA = async () => {
+  const handleSubmitQA = () => {
     if (!submissionId || !analysisResult) return
     const questions = analysisResult.generated_questions ?? []
-    const answerList = questions.map((q) => ({
+    const answers = questions.map((q) => ({
       question_id: q.question_id,
-      answer_text: qaAnswers[q.question_id] || '',
+      selected_number: qaAnswers[q.question_id] ?? null,
     }))
 
-    try {
-      setIsSubmitting(true)
-      setQaErrorMessage('')
+    setQaErrorMessage('')
 
-      const evalResult = await submitAnswersForEvaluation({ submissionId, answers: answerList })
-      const report = await getReportById(evalResult.report_id)
-      setReportData(report)
-      setTotalScore(report.total_score)
-      setWorkflowStatus('completed')
-      setShowReport(true)
-    } catch (err) {
-      setQaErrorMessage('답변 제출 중 오류가 발생했습니다.')
-      console.error(err)
-    } finally {
-      setIsSubmitting(false)
-    }
+    doSubmitAnswers(
+      { answers },
+      {
+        onSuccess: (evalResult) => {
+          setReportId(evalResult.report_id)
+          setTotalScore(evalResult.total_score ?? null)
+          setWorkflowStatus('completed')
+          setShowReport(true)
+        },
+        onError: () => setQaErrorMessage('답변 제출 중 오류가 발생했습니다.'),
+      }
+    )
   }
 
-  // 에이전트가 생성한 코드 적용
   const handleApplyAgentCode = (code) => {
     setDraft({ ...draft, raw_code: code })
   }
 
-  // 새 문제 시작
   const handleNewProblem = () => {
     setDraft({
       problem_title: '',
@@ -160,7 +149,7 @@ function WorkspacePage() {
     })
     clearAnalysisResult()
     clearQaAnswers()
-    setReportData(null)
+    setReportId(null)
     setSubmissionId(null)
     setWorkflowStatus('idle')
     setTotalScore(null)
@@ -193,22 +182,17 @@ function WorkspacePage() {
   return (
     <>
       <div style={styles.root}>
-        {/* 타이틀 바 */}
         {titleBar}
 
-        {/* 메인 영역 */}
         <div
           ref={containerRef}
           style={{ ...styles.main, cursor: isDragging ? 'col-resize' : 'default' }}
         >
-          {/* 드로어들 (absolute, 주 영역 위에 표시) */}
           {showTestCase && (
             <TestCaseDrawer onClose={() => setShowTestCase(false)} />
           )}
 
-          {/* 왼쪽: 코드 에디터 (+ AST 토글) */}
           <div style={{ ...styles.editorColumn, width: `${splitRatio}%` }}>
-            {/* 에디터 헤더 */}
             <div style={styles.panelHeader}>
               <span style={styles.panelLabel}>코드 에디터</span>
               <button
@@ -220,7 +204,6 @@ function WorkspacePage() {
             </div>
 
             {showAst ? (
-              // AST 표시 시 에디터 + AST 상하 분할
               <div style={styles.editorAstSplit}>
                 <div style={styles.editorHalf}>
                   <Editor
@@ -272,13 +255,11 @@ function WorkspacePage() {
             )}
           </div>
 
-          {/* 구분선 */}
           <div
             style={styles.divider}
             onMouseDown={handleDividerMouseDown}
           />
 
-          {/* 오른쪽: Q&A 패널 */}
           <div style={{ ...styles.qaColumn, flex: 1 }}>
             <QASection
               analysisResult={analysisResult}
@@ -289,7 +270,6 @@ function WorkspacePage() {
           </div>
         </div>
 
-        {/* 상태 바 */}
         <StatusBar
           language={draft.language}
           workflowStatus={workflowStatus}
@@ -297,10 +277,9 @@ function WorkspacePage() {
         />
       </div>
 
-      {/* 오버레이들 */}
       {showReport && (
         <ReportOverlay
-          reportData={reportData}
+          reportData={reportData ?? null}
           analysisResult={analysisResult}
           onClose={() => setShowReport(false)}
           onNewProblem={() => {

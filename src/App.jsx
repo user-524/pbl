@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import WorkspacePage from './pages/WorkspacePage.jsx'
+import ApiDemoPage from './pages/ApiDemoPage.jsx'
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx'
 
 function App() {
@@ -13,6 +14,14 @@ function App() {
         element={
           <ProtectedRoute>
             <WorkspacePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/api-demo"
+        element={
+          <ProtectedRoute>
+            <ApiDemoPage />
           </ProtectedRoute>
         }
       />
