@@ -39,6 +39,10 @@ function WorkspacePage() {
 
   const [showAst, setShowAst] = useState(false)
   const [astData, setAstData] = useState(null)
+  const [astHeight, setAstHeight] = useState(200)
+  const [isAstDragging, setIsAstDragging] = useState(false)
+  const astDragStartY = useRef(0)
+  const astDragStartHeight = useRef(0)
   const debounceTimer = useRef(null)
 
   const { mutate: createSubmission, isPending: isAnalyzing } = useCreateSubmission()
@@ -157,6 +161,32 @@ function WorkspacePage() {
     setQaErrorMessage('')
   }
 
+  const handleAstDividerMouseDown = (e) => {
+    e.preventDefault()
+    setIsAstDragging(true)
+    astDragStartY.current = e.clientY
+    astDragStartHeight.current = astHeight
+  }
+
+  const handleAstMouseMove = useCallback((e) => {
+    if (!isAstDragging) return
+    const delta = astDragStartY.current - e.clientY
+    setAstHeight(Math.min(600, Math.max(80, astDragStartHeight.current + delta)))
+  }, [isAstDragging])
+
+  const handleAstMouseUp = useCallback(() => setIsAstDragging(false), [])
+
+  useEffect(() => {
+    if (isAstDragging) {
+      window.addEventListener('mousemove', handleAstMouseMove)
+      window.addEventListener('mouseup', handleAstMouseUp)
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleAstMouseMove)
+      window.removeEventListener('mouseup', handleAstMouseUp)
+    }
+  }, [isAstDragging, handleAstMouseMove, handleAstMouseUp])
+
   const handleNodeClick = (line) => {
     if (editorRef.current) {
       editorRef.current.revealLineInCenter(line)
@@ -204,7 +234,7 @@ function WorkspacePage() {
             </div>
 
             {showAst ? (
-              <div style={styles.editorAstSplit}>
+              <div style={{ ...styles.editorAstSplit, cursor: isAstDragging ? 'ns-resize' : 'default' }}>
                 <div style={styles.editorHalf}>
                   <Editor
                     height="100%"
@@ -224,8 +254,11 @@ function WorkspacePage() {
                     }}
                   />
                 </div>
-                <div style={styles.astDivider} />
-                <div style={styles.astHalf}>
+                <div
+                  style={{ ...styles.astDivider, cursor: isAstDragging ? 'ns-resize' : 'ns-resize' }}
+                  onMouseDown={handleAstDividerMouseDown}
+                />
+                <div style={{ ...styles.astHalf, height: `${astHeight}px` }}>
                   <div style={styles.astHeader}>
                     <span style={styles.panelLabel}>AST 트리 (실시간)</span>
                   </div>
@@ -365,9 +398,10 @@ const styles = {
     minHeight: 0,
   },
   astDivider: {
-    height: '3px',
+    height: '4px',
     backgroundColor: 'var(--color-ide-border)',
     flexShrink: 0,
+    cursor: 'ns-resize',
   },
   astHalf: {
     height: '200px',
