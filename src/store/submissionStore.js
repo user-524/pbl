@@ -13,10 +13,14 @@ const useSubmissionStore = create(
   persist(
     (set) => ({
       draft: getInitialDraft(),
+      codeExecutionResult: null,
       analysisResult: null,
       qaAnswers: {},
 
       setDraft: (draft) => set({ draft }),
+
+      setCodeExecutionResult: (codeExecutionResult) => set({ codeExecutionResult }),
+      clearCodeExecutionResult: () => set({ codeExecutionResult: null }),
 
       setAnalysisResult: (analysisResult) => set({ analysisResult }),
 
@@ -47,6 +51,7 @@ const useSubmissionStore = create(
       resetSubmissionFlow: () =>
         set({
           draft: getInitialDraft(),
+          codeExecutionResult: null,
           analysisResult: null,
           qaAnswers: {},
         }),

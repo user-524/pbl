@@ -15,3 +15,11 @@ export async function getReports({ signal } = {}) {
 export async function getReport(id, { signal } = {}) {
   return client.get(ENDPOINTS.reports.detail(id), { signal })
 }
+
+/**
+ * @param {{ submission_id: number|string }} body
+ * @returns {Promise<object>}
+ */
+export async function generateReport(body, { signal } = {}) {
+  return client.post(ENDPOINTS.reports.generate, body, { signal })
+}

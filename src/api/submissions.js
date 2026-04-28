@@ -2,6 +2,14 @@ import client from './client.js'
 import { ENDPOINTS } from './endpoints.js'
 
 /**
+ * @param {{ language: string, raw_code: string, test_cases?: Array }} body
+ * @returns {Promise<object>}
+ */
+export async function executeCode(body, { signal } = {}) {
+  return client.post(ENDPOINTS.execute, body, { signal })
+}
+
+/**
  * @param {{ problem_title: string, problem_description: string, language: string, raw_code: string }} body
  * @returns {Promise<object>}
  */

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { getReports, getReport } from '../api/reports.js'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { generateReport, getReport, getReports } from '../api/reports.js'
 import { queryKeys } from '../api/queryKeys.js'
 
 /**
@@ -25,5 +25,20 @@ export function useReport(id, options = {}) {
     enabled: !!id && (options.enabled ?? true),
     staleTime: 1000 * 60 * 2,
     ...options,
+  })
+}
+
+/**
+ * Mutation hook that calls AI to generate a report for a submission.
+ * @returns {UseMutationResult}
+ */
+export function useGenerateReport() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body) => generateReport(body),
+    retry: false,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.reports.all })
+    },
   })
 }

@@ -1,417 +1,180 @@
 import { useState } from 'react'
 import useSubmissionStore from '../../store/submissionStore.js'
 
-function ProblemInfoPanel({ onClose }) {
-  const draft = useSubmissionStore((s) => s.draft)
-  const setDraft = useSubmissionStore((s) => s.setDraft)
-
-  const handleChange = (field, value) => {
-    setDraft({ ...draft, [field]: value })
-  }
-
-  return (
-    <div style={styles.problemPanel}>
-      <div style={styles.problemHeader}>
-        <span style={styles.problemTitle}>문제 정보</span>
-        <button style={styles.problemCloseBtn} onClick={onClose}>✕</button>
-      </div>
-      <div style={styles.problemBody}>
-        <div style={styles.problemField}>
-          <label style={styles.fieldLabel}>문제 제목</label>
-          <input
-            style={styles.fieldInput}
-            type="text"
-            placeholder="예: 피보나치 수열"
-            value={draft.problem_title}
-            onChange={(e) => handleChange('problem_title', e.target.value)}
-          />
-        </div>
-        <div style={styles.problemField}>
-          <label style={styles.fieldLabel}>문제 설명</label>
-          <textarea
-            style={styles.fieldTextarea}
-            placeholder="예: N번째 피보나치 수를 구하는 함수를 작성하시오."
-            value={draft.problem_description}
-            onChange={(e) => handleChange('problem_description', e.target.value)}
-          />
-        </div>
-        <div style={styles.problemField}>
-          <label style={styles.fieldLabel}>언어</label>
-          <select
-            style={styles.fieldInput}
-            value={draft.language}
-            onChange={(e) => handleChange('language', e.target.value)}
-          >
-            <option value="python">Python</option>
-            <option value="javascript">JavaScript</option>
-            <option value="java">Java</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function QASection({ onSubmit, isSubmitting, errorMessage, analysisResult }) {
   const qaAnswers = useSubmissionStore((s) => s.qaAnswers)
   const setQaAnswer = useSubmissionStore((s) => s.setQaAnswer)
-
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [showProblemInfo, setShowProblemInfo] = useState(false)
 
   const questions = analysisResult?.generated_questions ?? []
+  const answeredCount = questions.filter((q) => qaAnswers[q.question_id] != null).length
 
-  const qaContent = questions.length === 0 ? (
-    <div style={styles.empty}>
-      <div style={styles.emptyIcon}>💬</div>
-      <p style={styles.emptyTitle}>Q&A 세션</p>
-      <p style={styles.emptyText}>
-        코드를 작성하고 상단의 <strong style={styles.strong}>▶ 실행</strong> 버튼을 눌러
-        분석을 시작하면 질문이 생성됩니다.
-      </p>
-    </div>
-  ) : (() => {
-    const current = questions[currentIndex]
-    const isFirst = currentIndex === 0
-    const isLast = currentIndex === questions.length - 1
-    const choices = current.choices ?? []
-
+  if (questions.length === 0) {
     return (
-      <div style={styles.qaContent}>
-        {/* 헤더 */}
-        <div style={styles.header}>
-          <span style={styles.headerTitle}>질문 & 답변</span>
-          <span style={styles.headerCount}>
-            {currentIndex + 1} / {questions.length}
-          </span>
+      <div style={styles.container}>
+        <div style={styles.sectionHeader}>
+          <span style={styles.sectionTitle}>💬 AI 질의응답</span>
         </div>
-
-        {/* 질문 목록 네비게이션 */}
-        <div style={styles.questionNav}>
-          {questions.map((q, i) => {
-            const answered = qaAnswers[q.question_id] != null
-            return (
-              <button
-                key={i}
-                style={{
-                  ...styles.navDot,
-                  ...(i === currentIndex ? styles.navDotActive : {}),
-                  ...(answered && i !== currentIndex ? styles.navDotAnswered : {}),
-                }}
-                onClick={() => setCurrentIndex(i)}
-                title={`질문 ${i + 1}`}
-              >
-                {i + 1}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* 현재 질문 */}
-        <div style={styles.questionBox}>
-          <div style={styles.questionMeta}>
-            <span style={styles.qType}>{current.type}</span>
-            <span style={styles.qNum}>Q{currentIndex + 1}</span>
-          </div>
-          <p style={styles.qText}>{current.text}</p>
-        </div>
-
-        {/* 라디오 버튼 선택지 */}
-        <div style={styles.answerSection}>
-          <label style={styles.answerLabel}>선택지</label>
-          {choices.length === 0 ? (
-            <p style={styles.noChoices}>객관식 옵션이 제공되지 않았습니다.</p>
-          ) : (
-            <div style={styles.choiceList}>
-              {choices.map((choice) => {
-                const selected = qaAnswers[current.question_id] === choice.number
-                return (
-                  <label
-                    key={choice.number}
-                    style={{ ...styles.choiceLabel, ...(selected ? styles.choiceLabelSelected : {}) }}
-                  >
-                    <input
-                      type="radio"
-                      name={`question-${current.question_id}`}
-                      value={choice.number}
-                      checked={selected}
-                      onChange={() => setQaAnswer(current.question_id, choice.number)}
-                      style={styles.radioInput}
-                    />
-                    <span style={styles.choiceNumber}>{choice.number + 1}.</span>
-                    <span style={styles.choiceText}>{choice.text}</span>
-                  </label>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {errorMessage && <p style={styles.error}>{errorMessage}</p>}
-
-        {/* 이전/다음/제출 버튼 */}
-        <div style={styles.btnRow}>
-          <button
-            style={{
-              ...styles.navBtn,
-              opacity: isFirst ? 0.4 : 1,
-              cursor: isFirst ? 'not-allowed' : 'pointer',
-            }}
-            onClick={() => !isFirst && setCurrentIndex((p) => p - 1)}
-            disabled={isFirst}
-          >
-            ← 이전
-          </button>
-
-          {!isLast ? (
-            <button
-              style={styles.nextBtn}
-              onClick={() => setCurrentIndex((p) => p + 1)}
-            >
-              다음 →
-            </button>
-          ) : (
-            <button
-              style={{
-                ...styles.submitBtn,
-                opacity: isSubmitting ? 0.6 : 1,
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              }}
-              onClick={onSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span style={styles.spinner} />
-                  채점 중...
-                </>
-              ) : (
-                '✓ 답변 제출'
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* 전체 질문 요약 */}
-        <div style={styles.summary}>
-          <p style={styles.summaryTitle}>전체 질문 목록</p>
-          {questions.map((q, i) => (
-            <div
-              key={i}
-              style={{
-                ...styles.summaryItem,
-                ...(i === currentIndex ? styles.summaryItemActive : {}),
-              }}
-              onClick={() => setCurrentIndex(i)}
-            >
-              <span style={styles.summaryNum}>Q{i + 1}</span>
-              <span style={styles.summaryType}>[{q.type}]</span>
-              <span style={styles.summaryText}>{q.text}</span>
-              {qaAnswers[q.question_id] != null && (
-                <span style={styles.answeredBadge}>✓</span>
-              )}
-            </div>
-          ))}
+        <div style={styles.emptyBody}>
+          <p style={styles.emptyText}>질문을 불러오는 중입니다...</p>
         </div>
       </div>
     )
-  })()
+  }
+
+  const current = questions[currentIndex]
+  const isFirst = currentIndex === 0
+  const isLast = currentIndex === questions.length - 1
+  const choices = current.choices ?? []
 
   return (
-    <div style={styles.wrapper}>
-      <div style={{ ...styles.qaArea, flex: showProblemInfo ? '0 0 50%' : 1 }}>
-        {qaContent}
+    <div style={styles.container}>
+      {/* 섹션 헤더 */}
+      <div style={styles.sectionHeader}>
+        <span style={styles.sectionTitle}>💬 AI 질의응답</span>
+        <span style={styles.progress}>{answeredCount}/{questions.length} 답변</span>
       </div>
 
-      <div style={styles.toggleBar}>
+      {/* 질문 번호 네비게이션 */}
+      <div style={styles.navRow}>
+        {questions.map((q, i) => {
+          const answered = qaAnswers[q.question_id] != null
+          return (
+            <button
+              key={i}
+              style={{
+                ...styles.navDot,
+                ...(i === currentIndex ? styles.navDotActive : {}),
+                ...(answered && i !== currentIndex ? styles.navDotAnswered : {}),
+              }}
+              onClick={() => setCurrentIndex(i)}
+              title={`Q${i + 1}`}
+            >
+              {i + 1}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* 채팅 스타일 본문 */}
+      <div style={styles.chatBody}>
+        <div style={styles.aiMsg}>
+          <div style={styles.aiAvatar}>AI</div>
+          <div style={styles.aiContent}>
+            <span style={styles.qTypeBadge}>{current.type}</span>
+            <p style={styles.qText}>{current.text}</p>
+          </div>
+        </div>
+
+        <div style={styles.choices}>
+          {choices.length === 0 ? (
+            <p style={styles.noChoices}>객관식 옵션이 제공되지 않았습니다.</p>
+          ) : (
+            choices.map((choice) => {
+              const selected = qaAnswers[current.question_id] === choice.number
+              return (
+                <label
+                  key={choice.number}
+                  style={{ ...styles.choiceLabel, ...(selected ? styles.choiceLabelSelected : {}) }}
+                >
+                  <input
+                    type="radio"
+                    name={`q-${current.question_id}`}
+                    value={choice.number}
+                    checked={selected}
+                    onChange={() => setQaAnswer(current.question_id, choice.number)}
+                    style={styles.radio}
+                  />
+                  <span style={styles.choiceNum}>{choice.number + 1}.</span>
+                  <span style={styles.choiceText}>{choice.text}</span>
+                </label>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      {errorMessage && <p style={styles.error}>{errorMessage}</p>}
+
+      {/* 이전 / 다음 / 제출 */}
+      <div style={styles.footer}>
         <button
           style={{
-            ...styles.toggleBtn,
-            ...(showProblemInfo ? styles.toggleBtnActive : {}),
+            ...styles.navBtn,
+            opacity: isFirst ? 0.4 : 1,
+            cursor: isFirst ? 'not-allowed' : 'pointer',
           }}
-          onClick={() => setShowProblemInfo((p) => !p)}
+          onClick={() => !isFirst && setCurrentIndex((p) => p - 1)}
+          disabled={isFirst}
         >
-          {showProblemInfo ? '▼' : '▲'} 문제 정보
+          ← 이전
         </button>
-      </div>
 
-      {showProblemInfo && (
-        <div style={styles.problemWrapper}>
-          <ProblemInfoPanel onClose={() => setShowProblemInfo(false)} />
-        </div>
-      )}
+        {!isLast ? (
+          <button style={styles.nextBtn} onClick={() => setCurrentIndex((p) => p + 1)}>
+            다음 →
+          </button>
+        ) : (
+          <button
+            style={{
+              ...styles.submitBtn,
+              opacity: isSubmitting ? 0.6 : 1,
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            }}
+            onClick={onSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span style={styles.spinner} />
+                채점 중...
+              </>
+            ) : (
+              '✓ 답변 제출'
+            )}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
 
 const styles = {
-  wrapper: {
-    height: '100%',
+  container: {
     display: 'flex',
     flexDirection: 'column',
+    flex: 1,
     overflow: 'hidden',
-    backgroundColor: 'var(--color-ide-sidebar)',
-  },
-  qaArea: {
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
+    borderTop: '1px solid var(--color-ide-border)',
     minHeight: 0,
   },
-  qaContent: {
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  },
-  toggleBar: {
-    flexShrink: 0,
-    borderTop: '1px solid var(--color-ide-border)',
-    backgroundColor: 'var(--color-ide-titlebar)',
-    padding: '0',
-  },
-  toggleBtn: {
-    width: '100%',
-    padding: '7px 16px',
-    background: 'none',
-    border: 'none',
-    color: 'var(--color-ide-text-dim)',
-    fontSize: '12px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    textAlign: 'left',
-    letterSpacing: '0.3px',
-  },
-  toggleBtnActive: {
-    color: '#007acc',
-    backgroundColor: 'var(--color-ide-active)',
-  },
-  problemWrapper: {
-    flex: '0 0 50%',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    borderTop: '1px solid var(--color-ide-border)',
-  },
-  problemPanel: {
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-    backgroundColor: '#252526',
-  },
-  problemHeader: {
+  sectionHeader: {
+    height: '36px',
+    backgroundColor: '#1a2a3a',
+    borderBottom: '1px solid var(--color-ide-border)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '8px 16px',
-    borderBottom: '1px solid var(--color-ide-border)',
+    padding: '0 14px',
     flexShrink: 0,
   },
-  problemTitle: {
-    color: 'var(--color-ide-text)',
-    fontSize: '13px',
+  sectionTitle: {
+    color: '#4fc3f7',
+    fontSize: '12px',
     fontWeight: '600',
   },
-  problemCloseBtn: {
-    background: 'none',
-    border: 'none',
-    color: 'var(--color-ide-text-dim)',
-    cursor: 'pointer',
-    fontSize: '14px',
-    padding: '2px 4px',
-    lineHeight: 1,
-  },
-  problemBody: {
-    flex: 1,
-    overflowY: 'auto',
-    padding: '12px 16px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  problemField: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  fieldLabel: {
-    color: 'var(--color-ide-text-dim)',
+  progress: {
+    color: '#4ec9b0',
     fontSize: '11px',
     fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
   },
-  fieldInput: {
-    padding: '6px 10px',
-    fontSize: '13px',
-    backgroundColor: '#3c3c3c',
-    border: '1px solid var(--color-ide-border)',
-    borderRadius: '4px',
-    color: 'var(--color-ide-text)',
-    height: '34px',
-    boxSizing: 'border-box',
-  },
-  fieldTextarea: {
-    padding: '6px 10px',
-    fontSize: '13px',
-    backgroundColor: '#3c3c3c',
-    border: '1px solid var(--color-ide-border)',
-    borderRadius: '4px',
-    color: 'var(--color-ide-text)',
-    height: '72px',
-    resize: 'none',
-    fontFamily: 'inherit',
-    lineHeight: '1.5',
-    boxSizing: 'border-box',
-  },
-  empty: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '24px',
-    gap: '12px',
-  },
-  emptyIcon: { fontSize: '40px' },
-  emptyTitle: {
-    color: 'var(--color-ide-text)',
-    fontSize: '16px',
-    fontWeight: '600',
-    margin: 0,
-  },
-  emptyText: {
-    color: 'var(--color-ide-text-dim)',
-    fontSize: '13px',
-    textAlign: 'center',
-    lineHeight: '1.6',
-    margin: 0,
-  },
-  strong: { color: '#4ec9b0' },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '10px 16px',
-    borderBottom: '1px solid var(--color-ide-border)',
-    flexShrink: 0,
-  },
-  headerTitle: {
-    color: 'var(--color-ide-text)',
-    fontSize: '13px',
-    fontWeight: '600',
-  },
-  headerCount: {
-    color: 'var(--color-ide-text-dim)',
-    fontSize: '12px',
-  },
-  questionNav: {
+  navRow: {
     display: 'flex',
     gap: '6px',
-    padding: '8px 16px',
+    padding: '8px 14px',
     borderBottom: '1px solid var(--color-ide-border)',
     flexShrink: 0,
+    flexWrap: 'wrap',
   },
   navDot: {
     width: '26px',
@@ -430,110 +193,114 @@ const styles = {
   navDotActive: {
     backgroundColor: '#007acc',
     borderColor: '#007acc',
-    color: '#ffffff',
+    color: '#fff',
   },
   navDotAnswered: {
     backgroundColor: '#4ec9b0',
     borderColor: '#4ec9b0',
     color: '#1e1e1e',
   },
-  questionBox: {
-    backgroundColor: '#2d2d2d',
-    margin: '12px 16px 0',
-    borderRadius: '6px',
+  chatBody: {
+    flex: 1,
+    overflowY: 'auto',
     padding: '12px 14px',
-    border: '1px solid var(--color-ide-border)',
-    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
   },
-  questionMeta: {
+  aiMsg: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'flex-start',
+  },
+  aiAvatar: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    backgroundColor: '#0e639c',
+    color: '#fff',
+    fontSize: '10px',
+    fontWeight: '700',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '8px',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  qType: {
+  aiContent: {
+    flex: 1,
+    backgroundColor: '#2a2d2e',
+    borderRadius: '0 8px 8px 8px',
+    padding: '8px 12px',
+    border: '1px solid var(--color-ide-border)',
+  },
+  qTypeBadge: {
+    display: 'block',
     color: '#dcdcaa',
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: '600',
-  },
-  qNum: {
-    color: '#007acc',
-    fontSize: '12px',
-    fontWeight: '700',
+    marginBottom: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
   },
   qText: {
     color: 'var(--color-ide-text)',
-    fontSize: '14px',
+    fontSize: '13px',
     margin: 0,
-    lineHeight: '1.5',
+    lineHeight: 1.6,
   },
-  answerSection: {
+  choices: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
-    padding: '12px 16px 0',
-    flexShrink: 0,
-  },
-  answerLabel: {
-    color: 'var(--color-ide-text-dim)',
-    fontSize: '11px',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    gap: '5px',
+    paddingLeft: '38px',
   },
   noChoices: {
     color: 'var(--color-ide-text-dim)',
     fontSize: '13px',
-    margin: 0,
     fontStyle: 'italic',
-  },
-  choiceList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
+    margin: 0,
   },
   choiceLabel: {
     display: 'flex',
     alignItems: 'flex-start',
     gap: '8px',
-    padding: '8px 10px',
-    borderRadius: '4px',
+    padding: '7px 10px',
+    borderRadius: '6px',
     border: '1px solid var(--color-ide-border)',
     backgroundColor: '#3c3c3c',
     cursor: 'pointer',
     color: 'var(--color-ide-text)',
-    fontSize: '13px',
-    lineHeight: '1.4',
+    fontSize: '12px',
+    lineHeight: 1.4,
   },
   choiceLabelSelected: {
     backgroundColor: '#094771',
     borderColor: '#007acc',
   },
-  radioInput: {
+  radio: {
     marginTop: '2px',
     flexShrink: 0,
     accentColor: '#007acc',
   },
-  choiceNumber: {
+  choiceNum: {
     color: '#007acc',
     fontWeight: '700',
     flexShrink: 0,
-    fontSize: '12px',
-    minWidth: '18px',
+    fontSize: '11px',
+    minWidth: '16px',
   },
-  choiceText: {
-    flex: 1,
-  },
+  choiceText: { flex: 1 },
   error: {
     color: '#f44747',
     fontSize: '12px',
-    margin: '4px 16px 0',
+    margin: '0 14px 4px',
     flexShrink: 0,
   },
-  btnRow: {
+  footer: {
     display: 'flex',
     gap: '8px',
-    padding: '10px 16px',
+    padding: '8px 14px',
+    borderTop: '1px solid var(--color-ide-border)',
     flexShrink: 0,
   },
   navBtn: {
@@ -543,7 +310,7 @@ const styles = {
     border: '1px solid var(--color-ide-border)',
     color: 'var(--color-ide-text)',
     borderRadius: '4px',
-    fontSize: '13px',
+    fontSize: '12px',
     cursor: 'pointer',
   },
   nextBtn: {
@@ -551,11 +318,11 @@ const styles = {
     padding: '7px',
     background: '#0e639c',
     border: 'none',
-    color: '#ffffff',
+    color: '#fff',
     borderRadius: '4px',
-    fontSize: '13px',
-    cursor: 'pointer',
+    fontSize: '12px',
     fontWeight: '600',
+    cursor: 'pointer',
   },
   submitBtn: {
     flex: 2,
@@ -568,7 +335,7 @@ const styles = {
     border: 'none',
     color: '#1e1e1e',
     borderRadius: '4px',
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: '700',
     cursor: 'pointer',
   },
@@ -581,55 +348,16 @@ const styles = {
     borderRadius: '50%',
     animation: 'spin 0.8s linear infinite',
   },
-  summary: {
+  emptyBody: {
     flex: 1,
-    overflowY: 'auto',
-    padding: '8px 0',
-    borderTop: '1px solid var(--color-ide-border)',
-  },
-  summaryTitle: {
-    color: 'var(--color-ide-text-dim)',
-    fontSize: '11px',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    margin: '4px 16px 6px',
-  },
-  summaryItem: {
     display: 'flex',
-    alignItems: 'baseline',
-    gap: '6px',
-    padding: '6px 16px',
-    cursor: 'pointer',
-    borderLeft: '2px solid transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  summaryItemActive: {
-    backgroundColor: 'var(--color-ide-active)',
-    borderLeft: '2px solid #007acc',
-  },
-  summaryNum: {
-    color: '#007acc',
-    fontSize: '11px',
-    fontWeight: '700',
-    flexShrink: 0,
-  },
-  summaryType: {
-    color: '#dcdcaa',
-    fontSize: '10px',
-    flexShrink: 0,
-  },
-  summaryText: {
+  emptyText: {
     color: 'var(--color-ide-text-dim)',
-    fontSize: '12px',
-    flex: 1,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  answeredBadge: {
-    color: '#4ec9b0',
-    fontSize: '11px',
-    flexShrink: 0,
+    fontSize: '13px',
+    margin: 0,
   },
 }
 

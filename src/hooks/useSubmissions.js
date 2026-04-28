@@ -1,10 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createSubmission, getSubmission, submitAnswers } from '../api/submissions.js'
+import { createSubmission, executeCode, getSubmission, submitAnswers } from '../api/submissions.js'
 import { queryKeys } from '../api/queryKeys.js'
 import useSubmissionStore from '../store/submissionStore.js'
 
 /**
- * Mutation hook that posts code for analysis.
+ * Mutation hook that runs code only (no AI question generation).
+ * On success, stores codeExecutionResult in submissionStore.
+ */
+export function useExecuteCode() {
+  const setCodeExecutionResult = useSubmissionStore.getState().setCodeExecutionResult
+  return useMutation({
+    mutationFn: (body) => executeCode(body),
+    retry: false,
+    onSuccess: (data) => {
+      setCodeExecutionResult(data)
+    },
+  })
+}
+
+/**
+ * Mutation hook that posts code for AI analysis (generates questions).
  * On success, stores analysisResult in submissionStore and invalidates submissions cache.
  */
 export function useCreateSubmission() {

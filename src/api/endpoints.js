@@ -6,6 +6,7 @@ export const ENDPOINTS = {
     list: '/api/problems',
     detail: (id) => `/api/problems/${id}`,
   },
+  execute: '/api/execute',
   submissions: {
     create: '/api/submissions',
     detail: (id) => `/api/submissions/${id}`,
@@ -14,5 +15,6 @@ export const ENDPOINTS = {
   reports: {
     list: '/api/reports',
     detail: (id) => `/api/reports/${id}`,
+    generate: '/api/reports/generate',
   },
 }
