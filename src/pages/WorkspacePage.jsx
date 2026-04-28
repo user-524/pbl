@@ -111,14 +111,24 @@ function WorkspacePage() {
     clearCodeExecutionResult()
     setWorkflowStatus('executing')
 
+    const meaningfulTestCases = (draft.test_cases || []).filter(
+      (tc) => tc.input_data.trim() || tc.expected_output.trim()
+    )
+
     runCode(
       {
         language: draft.language,
         raw_code: draft.raw_code,
-        test_cases: draft.test_cases,
+        test_cases: meaningfulTestCases,
       },
       {
-        onSuccess: () => setWorkflowStatus('executed'),
+        onSuccess: (data) => {
+          if (data && data.status === 'SUCCESS') {
+            handleStartQA()
+          } else {
+            setWorkflowStatus('executed')
+          }
+        },
         onError: () => setWorkflowStatus('idle'),
       }
     )
@@ -423,7 +433,6 @@ function WorkspacePage() {
                       workflowStatus={workflowStatus}
                       codeExecutionResult={codeExecutionResult}
                       totalScore={totalScore}
-                      onStartQA={handleStartQA}
                       onGenerateReport={handleGenerateReport}
                       onViewReport={() => setShowReport(true)}
                     />

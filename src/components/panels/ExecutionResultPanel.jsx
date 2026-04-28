@@ -4,7 +4,6 @@ function ExecutionResultPanel({
   workflowStatus,
   codeExecutionResult,
   totalScore,
-  onStartQA,
   onGenerateReport,
   onViewReport,
 }) {
@@ -59,12 +58,6 @@ function ExecutionResultPanel({
       {codeExecutionResult && <ExecutionCards execution={codeExecutionResult} />}
 
       <div style={styles.actions}>
-        {workflowStatus === 'executed' && (
-          <button style={styles.actionBtnPrimary} onClick={onStartQA}>
-            💬 AI 질의응답 시작
-          </button>
-        )}
-
         {workflowStatus === 'qa_done' && (
           <button style={styles.actionBtnReport} onClick={onGenerateReport}>
             📊 리포트 생성 (AI)
@@ -83,24 +76,65 @@ function ExecutionResultPanel({
 
 function ExecutionCards({ execution }) {
   const isSuccess = execution.status === 'SUCCESS'
+  const testCaseResults = execution.test_case_results ?? []
+
   return (
-    <div style={styles.cards}>
-      <div style={styles.card}>
-        <span style={styles.cardLabel}>실행 상태</span>
-        <span style={{ ...styles.cardValue, color: isSuccess ? '#4ec9b0' : '#f44747' }}>
-          {execution.status || '-'}
-        </span>
+    <div style={styles.cardsWrapper}>
+      {!isSuccess && (
+        <div style={styles.errorBanner}>
+          <span style={styles.errorBannerIcon}>⚠</span>
+          코드 실행 중 오류가 발생했습니다. 코드를 확인하고 다시 시도해 주세요.
+        </div>
+      )}
+
+      <div style={styles.cards}>
+        <div style={styles.card}>
+          <span style={styles.cardLabel}>실행 상태</span>
+          <span style={{ ...styles.cardValue, color: isSuccess ? '#4ec9b0' : '#f44747' }}>
+            {execution.status || '-'}
+          </span>
+        </div>
+        <div style={styles.card}>
+          <span style={styles.cardLabel}>시간복잡도</span>
+          <span style={styles.cardValue}>
+            {execution.measured_time_complexity || '-'}
+          </span>
+        </div>
+        {execution.output != null && (
+          <div style={{ ...styles.card, flex: '1 1 100%' }}>
+            <span style={styles.cardLabel}>출력</span>
+            <pre style={styles.output}>{execution.output}</pre>
+          </div>
+        )}
       </div>
-      <div style={styles.card}>
-        <span style={styles.cardLabel}>시간복잡도</span>
-        <span style={styles.cardValue}>
-          {execution.measured_time_complexity || '-'}
-        </span>
-      </div>
-      {execution.output != null && (
-        <div style={{ ...styles.card, flex: '1 1 100%' }}>
-          <span style={styles.cardLabel}>출력</span>
-          <pre style={styles.output}>{execution.output}</pre>
+
+      {testCaseResults.length > 0 && (
+        <div style={styles.testCaseSection}>
+          <span style={styles.testCaseSectionLabel}>
+            테스트케이스 결과 ({testCaseResults.filter((r) => r.passed).length}/{testCaseResults.length} 통과)
+          </span>
+          {testCaseResults.map((tc, i) => (
+            <div key={i} style={{ ...styles.testCaseRow, borderColor: tc.passed ? '#4ec9b0' : '#f44747' }}>
+              <div style={styles.testCaseHeader}>
+                <span style={{ ...styles.testCaseBadge, backgroundColor: tc.passed ? '#1a3a2a' : '#3a1a1a', color: tc.passed ? '#4ec9b0' : '#f44747', borderColor: tc.passed ? '#4ec9b0' : '#f44747' }}>
+                  {tc.passed ? '✓ PASS' : '✗ FAIL'}
+                </span>
+                <span style={styles.testCaseNum}>#{i + 1}</span>
+              </div>
+              <div style={styles.testCaseGrid}>
+                <span style={styles.testCaseLabel}>입력</span>
+                <pre style={styles.testCasePre}>{tc.input_data ?? '-'}</pre>
+                <span style={styles.testCaseLabel}>기대 출력</span>
+                <pre style={styles.testCasePre}>{tc.expected_output ?? '-'}</pre>
+                {!tc.passed && (
+                  <>
+                    <span style={styles.testCaseLabel}>실제 출력</span>
+                    <pre style={{ ...styles.testCasePre, color: '#f44747' }}>{tc.actual_output ?? '-'}</pre>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -152,10 +186,88 @@ const styles = {
     gap: '10px',
     padding: '10px 0',
   },
+  cardsWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  errorBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 14px',
+    backgroundColor: '#3a1a1a',
+    border: '1px solid #f44747',
+    borderRadius: '6px',
+    color: '#f44747',
+    fontSize: '13px',
+    fontWeight: '500',
+  },
+  errorBannerIcon: {
+    fontSize: '16px',
+    flexShrink: 0,
+  },
   cards: {
     display: 'flex',
     gap: '10px',
     flexWrap: 'wrap',
+  },
+  testCaseSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  testCaseSectionLabel: {
+    color: 'var(--color-ide-text-dim)',
+    fontSize: '11px',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  testCaseRow: {
+    backgroundColor: '#2d2d2d',
+    border: '1px solid',
+    borderRadius: '6px',
+    padding: '8px 12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  testCaseHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  testCaseBadge: {
+    fontSize: '11px',
+    fontWeight: '700',
+    fontFamily: 'monospace',
+    padding: '2px 7px',
+    borderRadius: '3px',
+    border: '1px solid',
+  },
+  testCaseNum: {
+    color: 'var(--color-ide-text-dim)',
+    fontSize: '11px',
+  },
+  testCaseGrid: {
+    display: 'grid',
+    gridTemplateColumns: '64px 1fr',
+    gap: '2px 8px',
+    alignItems: 'start',
+  },
+  testCaseLabel: {
+    color: 'var(--color-ide-text-dim)',
+    fontSize: '11px',
+    paddingTop: '3px',
+  },
+  testCasePre: {
+    color: 'var(--color-ide-text)',
+    fontSize: '12px',
+    fontFamily: 'monospace',
+    margin: 0,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-all',
   },
   card: {
     backgroundColor: '#2d2d2d',
