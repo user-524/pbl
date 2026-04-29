@@ -7,7 +7,7 @@ export const ENDPOINTS = {
     detail: (id) => `/api/problems/${id}`,
   },
   execute: '/api/execute',
-  exe: '/api/exe',
+  exe: '/api/execute',
   submissions: {
     create: '/api/submissions',
     detail: (id) => `/api/submissions/${id}`,

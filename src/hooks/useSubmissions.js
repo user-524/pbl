@@ -23,6 +23,13 @@ export function useExecuteCode() {
     onSuccess: (data) => {
       setCodeExecutionResult(data)
     },
+    onError: (error) => {
+      console.error('[/api/exe] 오류 발생')
+      console.error('status:', error.status)
+      console.error('code:', error.code)
+      console.error('message:', error.message)
+      console.error('response body:', error.details)
+    },
   })
 }
 
