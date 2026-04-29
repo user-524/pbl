@@ -429,6 +429,18 @@ function WorkspacePage() {
                       <option value="java">Java</option>
                     </select>
                   </div>
+
+                  <button
+                    style={{
+                      ...styles.runBtnInline,
+                      opacity: (isExecuting || !draft.problem_title.trim()) ? 0.5 : 1,
+                      cursor: (isExecuting || !draft.problem_title.trim()) ? 'not-allowed' : 'pointer',
+                    }}
+                    onClick={handleRunCode}
+                    disabled={isExecuting || !draft.problem_title.trim()}
+                  >
+                    {isExecuting ? '실행 중...' : '▶ 코드 실행'}
+                  </button>
                 </div>
               ) : (
                 /* 실행 결과 + Q&A 영역 */
@@ -599,12 +611,26 @@ const styles = {
     border: '1px solid var(--color-ide-border)',
     borderRadius: '4px',
     color: 'var(--color-ide-text)',
-    height: '80px',
+    height: '280px',
     resize: 'vertical',
     fontFamily: 'inherit',
     lineHeight: '1.5',
     outline: 'none',
     boxSizing: 'border-box',
+  },
+  runBtnInline: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    background: '#0e639c',
+    border: 'none',
+    color: '#ffffff',
+    padding: '8px 14px',
+    borderRadius: '4px',
+    fontSize: '13px',
+    fontWeight: '600',
+    width: '100%',
   },
   errorMsg: {
     color: '#f44747',

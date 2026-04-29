@@ -40,26 +40,6 @@ function TitleBar({
         <div style={styles.divider} />
 
         <button
-          style={{
-            ...styles.runBtn,
-            opacity: runDisabled ? 0.5 : 1,
-            cursor: runDisabled ? 'not-allowed' : 'pointer',
-          }}
-          onClick={onRunCode}
-          disabled={runDisabled}
-          title={!hasProblemTitle ? '문제 제목을 먼저 입력하세요' : '코드 실행'}
-        >
-          {isExecuting ? (
-            <>
-              <span style={styles.spinner} />
-              실행 중...
-            </>
-          ) : (
-            '▶ 코드 실행'
-          )}
-        </button>
-
-        <button
           style={{ ...styles.agentBtn, ...(showAgent ? styles.agentBtnActive : {}) }}
           onClick={onToggleAgent}
           title="정답 풀이 에이전트"
