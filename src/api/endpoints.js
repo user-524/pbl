@@ -16,5 +16,10 @@ export const ENDPOINTS = {
     list: '/api/reports',
     detail: (id) => `/api/reports/${id}`,
     generate: '/api/reports/generate',
+    download: (id) => `/api/reports/${id}/download`,
+  },
+  learnings: {
+    list: '/api/learnings',
+    save: '/api/learnings',
   },
 }

@@ -24,7 +24,7 @@ function WorkspacePage() {
   const initializeQaAnswers = useSubmissionStore((s) => s.initializeQaAnswers)
   const clearQaAnswers = useSubmissionStore((s) => s.clearQaAnswers)
 
-  // idle | executing | executed | analyzing | qa | qa_done | reporting | completed
+  // idle | executing | executed | analyzing | qa | evaluating | qa_done | reporting | completed
   const [workflowStatus, setWorkflowStatus] = useState('idle')
   const [qaErrorMessage, setQaErrorMessage] = useState('')
   const [submissionId, setSubmissionId] = useState(null)
@@ -55,7 +55,7 @@ function WorkspacePage() {
   const { mutate: doGenerateReport } = useGenerateReport()
   const { data: reportData } = useReport(reportId, { enabled: !!reportId && workflowStatus === 'completed' })
 
-  const qaActive = ['analyzing', 'qa', 'qa_done'].includes(workflowStatus)
+  const qaActive = ['analyzing', 'qa', 'evaluating', 'qa_done'].includes(workflowStatus)
 
   useEffect(() => {
     if (!showAst) return
@@ -161,9 +161,11 @@ function WorkspacePage() {
     )
   }
 
-  // 3단계: Q&A 답변 제출
-  const handleSubmitQA = () => {
+  // 3단계: 14개 답변 완료 시 자동 채점 호출 (QASection이 마지막 답변 직후 호출)
+  const handleAllAnswered = useCallback(() => {
     if (!submissionId || !analysisResult) return
+    if (workflowStatus === 'evaluating' || workflowStatus === 'qa_done') return
+
     const questions = analysisResult.generated_questions ?? []
     const answers = questions.map((q) => ({
       question_id: q.question_id,
@@ -171,6 +173,7 @@ function WorkspacePage() {
     }))
 
     setQaErrorMessage('')
+    setWorkflowStatus('evaluating')
 
     doSubmitAnswers(
       { answers },
@@ -180,10 +183,13 @@ function WorkspacePage() {
           setTotalScore(evalResult.total_score ?? null)
           setWorkflowStatus('qa_done')
         },
-        onError: () => setQaErrorMessage('답변 제출 중 오류가 발생했습니다.'),
+        onError: () => {
+          setQaErrorMessage('답변 제출 중 오류가 발생했습니다. 다시 시도해 주세요.')
+          setWorkflowStatus('qa')
+        },
       }
     )
-  }
+  }, [submissionId, analysisResult, qaAnswers, doSubmitAnswers, workflowStatus])
 
   // 4단계: 리포트 생성 (AI 호출)
   const handleGenerateReport = () => {
@@ -438,12 +444,12 @@ function WorkspacePage() {
                     />
                   </div>
 
-                  {/* Q&A 패널 - analyzing/qa/qa_done 상태에서 직접 표시 */}
+                  {/* Q&A 패널 - analyzing/qa/evaluating/qa_done 상태에서 직접 표시 */}
                   {qaActive && (
                     <QASection
                       analysisResult={analysisResult}
-                      onSubmit={handleSubmitQA}
-                      isSubmitting={isSubmitting}
+                      onAllAnswered={handleAllAnswered}
+                      isSubmitting={isSubmitting || workflowStatus === 'evaluating'}
                       errorMessage={qaErrorMessage}
                     />
                   )}
@@ -464,6 +470,12 @@ function WorkspacePage() {
         <ReportOverlay
           reportData={reportData ?? null}
           analysisResult={analysisResult}
+          submissionId={submissionId}
+          reportId={reportId}
+          totalScore={totalScore}
+          problemTitle={draft.problem_title}
+          language={draft.language}
+          rawCode={draft.raw_code}
           onClose={() => setShowReport(false)}
           onNewProblem={() => {
             handleNewProblem()

@@ -11,4 +11,8 @@ export const queryKeys = {
     all: ['reports'],
     detail: (id) => ['reports', id],
   },
+  learnings: {
+    all: ['learnings'],
+    list: (anonymousId) => ['learnings', 'list', anonymousId],
+  },
 }

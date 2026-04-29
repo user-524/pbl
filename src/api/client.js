@@ -8,7 +8,12 @@ const LOGIN_PATH = ENDPOINTS.auth.login
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000',
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    // Bypass ngrok-free.dev's browser warning interstitial that otherwise
+    // returns HTML and breaks JSON requests with net::ERR_FAILED.
+    'ngrok-skip-browser-warning': 'true',
+  },
 })
 
 client.interceptors.request.use((config) => {

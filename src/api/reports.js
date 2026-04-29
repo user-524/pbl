@@ -23,3 +23,18 @@ export async function getReport(id, { signal } = {}) {
 export async function generateReport(body, { signal } = {}) {
   return client.post(ENDPOINTS.reports.generate, body, { signal })
 }
+
+/**
+ * Downloads the report as a Blob (PDF by default).
+ * The axios response interceptor returns `response.data`, which is a Blob when responseType is 'blob'.
+ * @param {number|string} id
+ * @param {'pdf'|'json'} [format]
+ * @returns {Promise<Blob>}
+ */
+export async function downloadReport(id, format = 'pdf', { signal } = {}) {
+  return client.get(ENDPOINTS.reports.download(id), {
+    params: { format },
+    responseType: 'blob',
+    signal,
+  })
+}

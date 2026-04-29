@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { generateReport, getReport, getReports } from '../api/reports.js'
+import { downloadReport, generateReport, getReport, getReports } from '../api/reports.js'
 import { queryKeys } from '../api/queryKeys.js'
 
 /**
@@ -40,5 +40,16 @@ export function useGenerateReport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reports.all })
     },
+  })
+}
+
+/**
+ * Mutation hook that downloads a report file (PDF/JSON Blob).
+ * Caller can trigger a browser download via URL.createObjectURL(blob) on success.
+ */
+export function useDownloadReport() {
+  return useMutation({
+    mutationFn: ({ reportId, format = 'pdf' }) => downloadReport(reportId, format),
+    retry: false,
   })
 }

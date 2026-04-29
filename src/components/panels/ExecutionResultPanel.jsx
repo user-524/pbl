@@ -41,6 +41,18 @@ function ExecutionResultPanel({
     )
   }
 
+  if (workflowStatus === 'evaluating') {
+    return (
+      <div style={styles.container}>
+        {codeExecutionResult && <ExecutionCards execution={codeExecutionResult} />}
+        <div style={styles.loadingBlock}>
+          <Spinner size={20} color="#4ec9b0" />
+          <p style={styles.loadingText}>14개 답변 채점 중...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (workflowStatus === 'reporting') {
     return (
       <div style={styles.container}>
