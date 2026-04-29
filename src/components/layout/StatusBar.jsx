@@ -1,8 +1,12 @@
 function StatusBar({ language, workflowStatus, totalScore }) {
   const statusLabels = {
     idle: '대기',
-    analyzing: '분석 중...',
-    qa: 'QA 진행',
+    executing: '코드 실행 중...',
+    executed: '실행 완료',
+    analyzing: 'AI 질문 생성 중...',
+    qa: 'Q&A 진행 중',
+    qa_done: '답변 제출 완료',
+    reporting: 'AI 리포트 생성 중...',
     completed: '완료',
   }
 

@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# bkit internal state (auto-generated)
+.bkit/state/
+.bkit/audit/
+.bkit/runtime/

@@ -13,10 +13,14 @@ const useSubmissionStore = create(
   persist(
     (set) => ({
       draft: getInitialDraft(),
+      codeExecutionResult: null,
       analysisResult: null,
       qaAnswers: {},
 
       setDraft: (draft) => set({ draft }),
+
+      setCodeExecutionResult: (codeExecutionResult) => set({ codeExecutionResult }),
+      clearCodeExecutionResult: () => set({ codeExecutionResult: null }),
 
       setAnalysisResult: (analysisResult) => set({ analysisResult }),
 
@@ -25,19 +29,19 @@ const useSubmissionStore = create(
           const nextAnswers = { ...state.qaAnswers }
 
           questions.forEach((question) => {
-            if (typeof nextAnswers[question.question_id] !== 'string') {
-              nextAnswers[question.question_id] = ''
+            if (nextAnswers[question.question_id] == null) {
+              nextAnswers[question.question_id] = null
             }
           })
 
           return { qaAnswers: nextAnswers }
         }),
 
-      setQaAnswer: (questionId, answerText) =>
+      setQaAnswer: (questionId, selectedNumber) =>
         set((state) => ({
           qaAnswers: {
             ...state.qaAnswers,
-            [questionId]: answerText,
+            [questionId]: selectedNumber,
           },
         })),
 
@@ -47,6 +51,7 @@ const useSubmissionStore = create(
       resetSubmissionFlow: () =>
         set({
           draft: getInitialDraft(),
+          codeExecutionResult: null,
           analysisResult: null,
           qaAnswers: {},
         }),

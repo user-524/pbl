@@ -1,36 +1,34 @@
 import { useNavigate } from 'react-router-dom'
+import { useLogout } from '../../hooks/useAuth.js'
 
 function TitleBar({
-  isAnalyzing,
-  onRunAnalysis,
-  onToggleReport,
-  onToggleTestCase,
-  onToggleAgent,
-  showReport,
-  showTestCase,
-  showAgent,
   workflowStatus,
+  isExecuting,
+  hasProblemTitle,
+  onRunCode,
+  onToggleAgent,
+  showAgent,
+  onToggleTestCase,
+  showTestCase,
 }) {
   const navigate = useNavigate()
+  const clearToken = useLogout()
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token')
+    clearToken()
     navigate('/login')
   }
 
-  const canRun = workflowStatus !== 'analyzing'
+  const runDisabled = isExecuting || !hasProblemTitle
 
   return (
     <div style={styles.bar}>
-      {/* 왼쪽: 앱 제목 */}
       <div style={styles.left}>
         <span style={styles.icon}>⬡</span>
         <span style={styles.title}>AI 윤리 기반 학습 평가</span>
       </div>
 
-      {/* 오른쪽: 액션 버튼들 */}
       <div style={styles.right}>
-        {/* 토글 버튼들 */}
         <button
           style={{ ...styles.toggleBtn, ...(showTestCase ? styles.toggleBtnActive : {}) }}
           onClick={onToggleTestCase}
@@ -41,37 +39,6 @@ function TitleBar({
 
         <div style={styles.divider} />
 
-        {/* 분석 실행 버튼 */}
-        <button
-          style={{
-            ...styles.runBtn,
-            opacity: isAnalyzing ? 0.6 : 1,
-            cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-          }}
-          onClick={onRunAnalysis}
-          disabled={isAnalyzing}
-          title="코드 분석 실행"
-        >
-          {isAnalyzing ? (
-            <>
-              <span style={styles.spinner} />
-              분석 중...
-            </>
-          ) : (
-            '▶ 실행'
-          )}
-        </button>
-
-        {/* 리포트 버튼 */}
-        <button
-          style={{ ...styles.reportBtn, ...(showReport ? styles.reportBtnActive : {}) }}
-          onClick={onToggleReport}
-          title="리포트 보기"
-        >
-          📊 리포트
-        </button>
-
-        {/* 에이전트 버튼 */}
         <button
           style={{ ...styles.agentBtn, ...(showAgent ? styles.agentBtnActive : {}) }}
           onClick={onToggleAgent}
@@ -153,20 +120,6 @@ const styles = {
     fontSize: '13px',
     cursor: 'pointer',
     fontWeight: '600',
-  },
-  reportBtn: {
-    background: 'none',
-    border: '1px solid var(--color-ide-border)',
-    color: 'var(--color-ide-text-dim)',
-    padding: '4px 10px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    cursor: 'pointer',
-  },
-  reportBtnActive: {
-    backgroundColor: '#094771',
-    borderColor: '#007acc',
-    color: '#ffffff',
   },
   agentBtn: {
     background: 'none',

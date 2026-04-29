@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   RadarChart,
   PolarGrid,
@@ -6,8 +7,70 @@ import {
   Radar,
   ResponsiveContainer,
 } from 'recharts'
+import { useDownloadReport } from '../../hooks/useReports.js'
+import { useSaveLearning } from '../../hooks/useLearnings.js'
+import useAnonymousStore from '../../store/anonymousStore.js'
 
-function ReportOverlay({ reportData, analysisResult, onClose, onNewProblem }) {
+function ReportOverlay({
+  reportData,
+  analysisResult,
+  submissionId,
+  reportId,
+  totalScore,
+  problemTitle,
+  language,
+  rawCode,
+  onClose,
+  onNewProblem,
+}) {
+  const ensureAnonymousId = useAnonymousStore((s) => s.ensureAnonymousId)
+  const { mutate: downloadMutate, isPending: isDownloading } = useDownloadReport()
+  const { mutate: saveMutate, isPending: isSaving } = useSaveLearning()
+  const [savedOk, setSavedOk] = useState(false)
+  const [actionError, setActionError] = useState('')
+
+  const handleDownload = () => {
+    if (!reportId) return
+    setActionError('')
+    downloadMutate(
+      { reportId, format: 'pdf' },
+      {
+        onSuccess: (blob) => {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `report-${reportId}.pdf`
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          setTimeout(() => URL.revokeObjectURL(url), 0)
+        },
+        onError: () => setActionError('리포트 다운로드 중 오류가 발생했습니다.'),
+      }
+    )
+  }
+
+  const handleSaveLearning = () => {
+    if (!submissionId || !reportId) return
+    setActionError('')
+    const anonymousId = ensureAnonymousId()
+    saveMutate(
+      {
+        anonymous_id: anonymousId,
+        submission_id: submissionId,
+        report_id: reportId,
+        problem_title: problemTitle ?? '',
+        language: language ?? '',
+        raw_code: rawCode ?? '',
+        total_score: totalScore ?? reportData?.total_score ?? 0,
+      },
+      {
+        onSuccess: () => setSavedOk(true),
+        onError: () => setActionError('학습 저장 중 오류가 발생했습니다.'),
+      }
+    )
+  }
+
   if (!reportData) {
     return (
       <div style={styles.overlay}>
@@ -39,12 +102,40 @@ function ReportOverlay({ reportData, analysisResult, onClose, onNewProblem }) {
         <div style={styles.panelHeader}>
           <span style={styles.panelTitle}>📊 평가 리포트</span>
           <div style={styles.headerActions}>
+            <button
+              style={{
+                ...styles.downloadBtn,
+                opacity: isDownloading || !reportId ? 0.5 : 1,
+                cursor: isDownloading || !reportId ? 'not-allowed' : 'pointer',
+              }}
+              onClick={handleDownload}
+              disabled={isDownloading || !reportId}
+              title="리포트 PDF 다운로드"
+            >
+              {isDownloading ? '다운로드 중...' : '⬇ 다운로드'}
+            </button>
+            <button
+              style={{
+                ...styles.saveBtn,
+                ...(savedOk ? styles.saveBtnDone : {}),
+                opacity: isSaving || !reportId || !submissionId ? 0.6 : 1,
+                cursor: isSaving || savedOk || !reportId || !submissionId ? 'not-allowed' : 'pointer',
+              }}
+              onClick={handleSaveLearning}
+              disabled={isSaving || savedOk || !reportId || !submissionId}
+              title="학습 기록 저장 (익명)"
+            >
+              {savedOk ? '✓ 저장됨' : isSaving ? '저장 중...' : '💾 학습 저장'}
+            </button>
             <button style={styles.newProblemBtn} onClick={onNewProblem}>
               + 새 문제
             </button>
             <button style={styles.closeBtn} onClick={onClose}>✕</button>
           </div>
         </div>
+        {actionError && (
+          <div style={styles.actionErrorBar}>{actionError}</div>
+        )}
 
         <div style={styles.body}>
           {/* 총점 */}
@@ -219,6 +310,37 @@ const styles = {
     borderRadius: '4px',
     fontSize: '12px',
     cursor: 'pointer',
+  },
+  downloadBtn: {
+    background: '#0e639c',
+    border: '1px solid #0e639c',
+    color: '#ffffff',
+    padding: '4px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '600',
+  },
+  saveBtn: {
+    background: '#2d1f3d',
+    border: '1px solid #a855f7',
+    color: '#d8b4fe',
+    padding: '4px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '600',
+  },
+  saveBtnDone: {
+    background: '#1a3a2a',
+    borderColor: '#4ec9b0',
+    color: '#4ec9b0',
+  },
+  actionErrorBar: {
+    padding: '6px 16px',
+    backgroundColor: '#3a1a1a',
+    borderBottom: '1px solid #f44747',
+    color: '#f44747',
+    fontSize: '12px',
+    fontWeight: '500',
   },
   closeBtn: {
     background: 'none',
