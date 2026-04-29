@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createSubmission, executeCode, getSubmission, submitAnswers } from '../api/submissions.js'
+import { createSubmission, executeCode, getSubmission, runCodeSandbox, submitAnswers } from '../api/submissions.js'
 import { queryKeys } from '../api/queryKeys.js'
 import useSubmissionStore from '../store/submissionStore.js'
 
@@ -10,7 +10,15 @@ import useSubmissionStore from '../store/submissionStore.js'
 export function useExecuteCode() {
   const setCodeExecutionResult = useSubmissionStore.getState().setCodeExecutionResult
   return useMutation({
-    mutationFn: (body) => executeCode(body),
+    mutationFn: async (body) => {
+      const data = await runCodeSandbox({ language: body.language, code: body.raw_code })
+      return {
+        status: data.success ? 'SUCCESS' : 'FAILURE',
+        output: data.success ? (data.stdout || '') : (data.stderr || data.stdout || ''),
+        measured_time_complexity: null,
+        test_case_results: [],
+      }
+    },
     retry: false,
     onSuccess: (data) => {
       setCodeExecutionResult(data)

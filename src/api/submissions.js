@@ -10,6 +10,14 @@ export async function executeCode(body, { signal } = {}) {
 }
 
 /**
+ * @param {{ language: string, code: string }} body
+ * @returns {Promise<{ success: boolean, stdout: string, stderr: string, exit_code: number, timed_out: boolean }>}
+ */
+export async function runCodeSandbox(body, { signal } = {}) {
+  return client.post(ENDPOINTS.exe, body, { signal })
+}
+
+/**
  * @param {{ problem_title: string, problem_description: string, language: string, raw_code: string }} body
  * @returns {Promise<object>}
  */
