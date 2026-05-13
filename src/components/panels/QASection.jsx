@@ -94,10 +94,32 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage }
           const selectedNumber = qaAnswers[q.question_id]
           const isLocked = selectedNumber != null
           const rawChoices = q.choices ?? q.options ?? []
-          const choices = rawChoices.map((c, i) => ({
-            number: c.number ?? c.option_number ?? i,
-            text: c.text ?? c.option_text ?? c.content ?? c.label ?? String(c),
-          }))
+          const choices = rawChoices.map((c, i) => {
+            const rawText = c.text ?? c.option_text ?? c.content ?? c.label ?? String(c)
+            const explicitCode = c.code ?? c.code_snippet ?? c.code_content ?? null
+
+            let label = rawText
+            let code = explicitCode
+
+            if (!explicitCode) {
+              const newlineIdx = rawText.indexOf('\n')
+              const colonIdx = rawText.indexOf(':')
+              if (newlineIdx !== -1) {
+                label = rawText.slice(0, newlineIdx).trim()
+                code = rawText.slice(newlineIdx + 1)
+              } else if (colonIdx !== -1) {
+                label = rawText.slice(0, colonIdx).trim()
+                const rest = rawText.slice(colonIdx + 1).trim()
+                if (rest) code = rest
+              }
+            }
+
+            return {
+              number: c.number ?? c.option_number ?? i + 1,
+              text: label,
+              code,
+            }
+          })
 
           const selectedChoice = choices.find((c) => c.number === selectedNumber)
           const correctNumber = q.answer_key
@@ -146,8 +168,12 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage }
                         onClick={() => setQaAnswer(q.question_id, choice.number)}
                         disabled={isSubmitting}
                       >
-                        <span style={styles.choiceNum}>{choice.number}.</span>
-                        <span style={styles.choiceText}>{choice.text}</span>
+                        <span style={styles.choiceText}>
+                          <span style={styles.choiceLabel}>{choice.text}</span>
+                          {choice.code && (
+                            <code style={styles.choiceCode}>{choice.code}</code>
+                          )}
+                        </span>
                       </button>
                     ))
                   )}
@@ -164,8 +190,12 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage }
                       backgroundColor: isCorrect ? '#0d3d2a' : '#3d0d0d',
                     }}
                   >
-                    <span style={styles.userChoiceNum}>{selectedChoice.number}.</span>
-                    <span style={styles.userChoiceText}>{selectedChoice.text}</span>
+                    <span style={styles.userChoiceText}>
+                      <span style={styles.choiceLabel}>{selectedChoice.text}</span>
+                      {selectedChoice.code && (
+                        <code style={styles.choiceCode}>{selectedChoice.code}</code>
+                      )}
+                    </span>
                     <span style={{ marginLeft: '8px', fontSize: '14px' }}>
                       {isCorrect ? '✓' : '✗'}
                     </span>
@@ -204,12 +234,15 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage }
                           <p style={styles.wrongReason}>{wrongReason}</p>
                         )}
                         {correctChoice && (
-                          <p style={styles.correctHint}>
+                          <div style={styles.correctHint}>
                             정답:{' '}
                             <strong style={{ color: '#4ec9b0' }}>
                               {correctChoice.number}. {correctChoice.text}
                             </strong>
-                          </p>
+                            {correctChoice.code && (
+                              <code style={styles.choiceCode}>{correctChoice.code}</code>
+                            )}
+                          </div>
                         )}
                       </>
                     )}
@@ -454,7 +487,24 @@ const styles = {
     fontSize: '11px',
     minWidth: '16px',
   },
-  choiceText: { flex: 1 },
+  choiceText: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
+  choiceLabel: { fontWeight: '600', color: '#9cdcfe', fontSize: '11px' },
+  choiceCode: {
+    display: 'block',
+    margin: '6px 0 0',
+    padding: '6px 8px',
+    backgroundColor: '#1e1e1e',
+    border: '1px solid #3c3c3c',
+    borderRadius: '4px',
+    fontSize: '11px',
+    fontFamily: 'Consolas, "Courier New", monospace',
+    color: '#d4d4d4',
+    whiteSpace: 'pre-wrap',
+    lineHeight: 1.5,
+    textAlign: 'left',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
   /* User (right) */
   userMsg: {
     display: 'flex',
