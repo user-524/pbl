@@ -21,7 +21,7 @@ const BLOOM_COLORS = {
   '평가 (Evaluate)': '#c586c0',
 }
 
-function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage }) {
+function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, onGenerateReport, canGenerateReport }) {
   const qaAnswers = useSubmissionStore((s) => s.qaAnswers)
   const setQaAnswer = useSubmissionStore((s) => s.setQaAnswer)
   const scrollRef = useRef(null)
@@ -280,9 +280,20 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage }
                 답변 채점 중...
               </>
             ) : (
-              <>✓ 모든 질문에 답변했습니다. 우측 상단의 <strong>리포트 생성</strong> 버튼을 눌러주세요.</>
+              <span>✓ 모든 질문에 답변했습니다.</span>
             )}
           </div>
+        )}
+
+        {/* Report generation button */}
+        {allAnswered && !isSubmitting && canGenerateReport && (
+          <button
+            type="button"
+            style={styles.reportBtn}
+            onClick={onGenerateReport}
+          >
+            📄 리포트 보기
+          </button>
         )}
       </div>
 
@@ -564,6 +575,19 @@ const styles = {
     borderTop: '2px solid #4ec9b0',
     borderRadius: '50%',
     animation: 'spin 0.8s linear infinite',
+  },
+  reportBtn: {
+    padding: '10px 0',
+    width: '100%',
+    backgroundColor: '#0e639c',
+    border: 'none',
+    borderRadius: '6px',
+    color: '#ffffff',
+    fontSize: '13px',
+    fontWeight: '700',
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    flexShrink: 0,
   },
   error: {
     color: '#f44747',

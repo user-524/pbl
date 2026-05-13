@@ -72,7 +72,7 @@ function ExecutionResultPanel({
       <div style={styles.actions}>
         {workflowStatus === 'qa_done' && (
           <button style={styles.actionBtnReport} onClick={onGenerateReport}>
-            📊 리포트 생성 (AI)
+            📊 리포트 보기
           </button>
         )}
 

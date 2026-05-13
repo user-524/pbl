@@ -11,7 +11,7 @@ import { parseCodeToAst } from '../utils/simpleAstParser.js'
 import AstTreeViewer from '../components/ast/AstTreeViewer.jsx'
 import useSubmissionStore from '../store/submissionStore.js'
 import { useExecuteCode, useCreateSubmission, useSubmitAnswers } from '../hooks/useSubmissions.js'
-import { useReport, useGenerateReport } from '../hooks/useReports.js'
+import { useReport } from '../hooks/useReports.js'
 
 function WorkspacePage() {
   const draft = useSubmissionStore((s) => s.draft)
@@ -51,7 +51,6 @@ function WorkspacePage() {
   const { mutate: runCode, isPending: isExecuting } = useExecuteCode()
   const { mutate: createSubmission, isPending: isAnalyzing } = useCreateSubmission()
   const { mutate: doSubmitAnswers, isPending: isSubmitting } = useSubmitAnswers(submissionId)
-  const { mutate: doGenerateReport } = useGenerateReport()
   const { data: reportData } = useReport(reportId, { enabled: !!reportId && workflowStatus === 'completed' })
 
   const qaActive = ['analyzing', 'qa', 'evaluating', 'qa_done'].includes(workflowStatus)
@@ -199,24 +198,9 @@ function WorkspacePage() {
     )
   }, [submissionId, analysisResult, doSubmitAnswers, workflowStatus])
 
-  // 4단계: 리포트 생성 (AI 호출)
   const handleGenerateReport = () => {
-    if (!submissionId) return
-
-    setWorkflowStatus('reporting')
-
-    doGenerateReport(
-      { submission_id: submissionId },
-      {
-        onSuccess: (result) => {
-          setReportId(result.report_id ?? reportId)
-          setTotalScore(result.total_score ?? totalScore)
-          setWorkflowStatus('completed')
-          setShowReport(true)
-        },
-        onError: () => setWorkflowStatus('qa_done'),
-      }
-    )
+    setWorkflowStatus('completed')
+    setShowReport(true)
   }
 
   const handleApplyAgentCode = (code) => {
@@ -471,6 +455,8 @@ function WorkspacePage() {
                       onAllAnswered={handleAllAnswered}
                       isSubmitting={isSubmitting || workflowStatus === 'evaluating'}
                       errorMessage={qaErrorMessage}
+                      onGenerateReport={handleGenerateReport}
+                      canGenerateReport={workflowStatus === 'qa_done'}
                     />
                   )}
                 </div>
