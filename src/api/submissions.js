@@ -22,7 +22,7 @@ export async function runCodeSandbox(body, { signal } = {}) {
  * @returns {Promise<object>}
  */
 export async function createSubmission(body, { signal } = {}) {
-  return client.post(ENDPOINTS.submissions.create, body, { signal })
+  return client.post(ENDPOINTS.submissions.create, JSON.stringify(body), { signal })
 }
 
 /**

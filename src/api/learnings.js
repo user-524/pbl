@@ -14,7 +14,7 @@ import { ENDPOINTS } from './endpoints.js'
  * @returns {Promise<{ success: boolean, learning_id: number, saved_at: string }>}
  */
 export async function saveLearning(body, { signal } = {}) {
-  return client.post(ENDPOINTS.learnings.save, body, { signal })
+  return client.post(ENDPOINTS.learnings.save, JSON.stringify(body), { signal })
 }
 
 /**
