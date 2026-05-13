@@ -20,7 +20,6 @@ function WorkspacePage() {
   const clearCodeExecutionResult = useSubmissionStore((s) => s.clearCodeExecutionResult)
   const analysisResult = useSubmissionStore((s) => s.analysisResult)
   const clearAnalysisResult = useSubmissionStore((s) => s.clearAnalysisResult)
-  const qaAnswers = useSubmissionStore((s) => s.qaAnswers)
   const initializeQaAnswers = useSubmissionStore((s) => s.initializeQaAnswers)
   const clearQaAnswers = useSubmissionStore((s) => s.clearQaAnswers)
 
@@ -167,10 +166,18 @@ function WorkspacePage() {
     if (workflowStatus === 'evaluating' || workflowStatus === 'qa_done') return
 
     const questions = analysisResult.generated_questions ?? []
+    // 스토어에서 직접 최신 상태를 읽어 클로저 스테일 문제를 방지
+    const freshQaAnswers = useSubmissionStore.getState().qaAnswers
     const answers = questions.map((q) => ({
-      question_id: q.question_id,
-      selected_number: qaAnswers[q.question_id] ?? null,
+      question_id: String(q.question_id),
+      selected_index: freshQaAnswers[q.question_id] ?? null,
     }))
+
+    if (answers.some((a) => a.selected_index == null)) {
+      console.error('[submitAnswers] null selected_index detected:', answers)
+      setQaErrorMessage('일부 답변이 누락되었습니다. 페이지를 새로고침 후 다시 시도해 주세요.')
+      return
+    }
 
     setQaErrorMessage('')
     setWorkflowStatus('evaluating')
@@ -183,13 +190,14 @@ function WorkspacePage() {
           setTotalScore(evalResult.total_score ?? null)
           setWorkflowStatus('qa_done')
         },
-        onError: () => {
+        onError: (error) => {
+          console.error('[submitAnswers] error:', error.status, JSON.stringify(error.details))
           setQaErrorMessage('답변 제출 중 오류가 발생했습니다. 다시 시도해 주세요.')
           setWorkflowStatus('qa')
         },
       }
     )
-  }, [submissionId, analysisResult, qaAnswers, doSubmitAnswers, workflowStatus])
+  }, [submissionId, analysisResult, doSubmitAnswers, workflowStatus])
 
   // 4단계: 리포트 생성 (AI 호출)
   const handleGenerateReport = () => {
