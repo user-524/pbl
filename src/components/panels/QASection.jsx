@@ -94,6 +94,7 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
           const selectedNumber = qaAnswers[q.question_id]
           const isLocked = selectedNumber != null
           const rawChoices = q.choices ?? q.options ?? []
+          if (rawChoices.length > 0) console.log(`[QASection] Q${idx} choice[0]:`, JSON.stringify(rawChoices[0]))
           const choices = rawChoices.map((c, i) => {
             const rawText = c.text ?? c.option_text ?? c.content ?? c.label ?? String(c)
             const explicitCode = c.code ?? c.code_snippet ?? c.code_content ?? null
@@ -103,14 +104,9 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
 
             if (!explicitCode) {
               const newlineIdx = rawText.indexOf('\n')
-              const colonIdx = rawText.indexOf(':')
               if (newlineIdx !== -1) {
                 label = rawText.slice(0, newlineIdx).trim()
                 code = rawText.slice(newlineIdx + 1)
-              } else if (colonIdx !== -1) {
-                label = rawText.slice(0, colonIdx).trim()
-                const rest = rawText.slice(colonIdx + 1).trim()
-                if (rest) code = rest
               }
             }
 
@@ -168,6 +164,7 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
                         onClick={() => setQaAnswer(q.question_id, choice.number)}
                         disabled={isSubmitting}
                       >
+                        <span style={styles.choiceNum}>{choice.number}.</span>
                         <span style={styles.choiceText}>
                           <span style={styles.choiceLabel}>{choice.text}</span>
                           {choice.code && (
@@ -190,6 +187,7 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
                       backgroundColor: isCorrect ? '#0d3d2a' : '#3d0d0d',
                     }}
                   >
+                    <span style={styles.userChoiceNum}>{selectedChoice.number}.</span>
                     <span style={styles.userChoiceText}>
                       <span style={styles.choiceLabel}>{selectedChoice.text}</span>
                       {selectedChoice.code && (
