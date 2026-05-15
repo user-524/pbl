@@ -14,6 +14,7 @@ function LoginPage() {
   const { mutate: doLogin, isPending: isLoginPending } = useLogin()
   const { mutate: doRegister, isPending: isRegisterPending } = useRegister()
   const setAuth = useAuthStore((s) => s.setAuth)
+  const clearToken = useAuthStore((s) => s.clearToken)
 
   const isPending = isLoginPending || isRegisterPending
 
@@ -31,13 +32,24 @@ function LoginPage() {
       return
     }
 
-    const onSuccess = () => navigate('/workspace')
     const onError = (err) => setErrorMessage(err.message || '요청에 실패했습니다.')
 
     if (mode === 'login') {
-      doLogin({ username, password }, { onSuccess, onError })
+      doLogin({ username, password }, { onSuccess: () => navigate('/workspace'), onError })
     } else {
-      doRegister({ username, password }, { onSuccess, onError })
+      doRegister({ username, password }, {
+        onSuccess: () => {
+          const goNow = window.confirm('바로 로그인하시겠습니까?')
+          if (goNow) {
+            navigate('/workspace')
+          } else {
+            clearToken()
+            setPassword('')
+            switchMode('login')
+          }
+        },
+        onError,
+      })
     }
   }
 
