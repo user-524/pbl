@@ -49,6 +49,10 @@ function TitleBar({
 
         <div style={styles.divider} />
 
+        <button style={styles.mypageBtn} onClick={() => navigate('/mypage')}>
+          마이페이지
+        </button>
+
         <button style={styles.logoutBtn} onClick={handleLogout}>
           로그아웃
         </button>
@@ -134,6 +138,15 @@ const styles = {
     backgroundColor: '#2d1f3d',
     borderColor: '#a855f7',
     color: '#d8b4fe',
+  },
+  mypageBtn: {
+    background: 'none',
+    border: '1px solid var(--color-ide-border)',
+    color: 'var(--color-ide-text-dim)',
+    padding: '4px 12px',
+    borderRadius: '4px',
+    fontSize: '13px',
+    cursor: 'pointer',
   },
   logoutBtn: {
     background: 'none',
