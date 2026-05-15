@@ -2,6 +2,13 @@ import client from './client.js'
 import { ENDPOINTS } from './endpoints.js'
 
 /**
+ * @returns {Promise<Array>}
+ */
+export async function getSubmissions({ signal } = {}) {
+  return client.get(ENDPOINTS.submissions.list, { signal })
+}
+
+/**
  * @param {{ language: string, raw_code: string, test_cases?: Array }} body
  * @returns {Promise<object>}
  */
@@ -22,7 +29,7 @@ export async function runCodeSandbox(body, { signal } = {}) {
  * @returns {Promise<object>}
  */
 export async function createSubmission(body, { signal } = {}) {
-  return client.post(ENDPOINTS.submissions.create, body, { signal })
+  return client.post(ENDPOINTS.submissions.create, JSON.stringify(body), { signal })
 }
 
 /**

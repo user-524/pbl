@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { login } from '../api/auth.js'
+import { login, register } from '../api/auth.js'
 import useAuthStore, { useAuthToken } from '../store/authStore.js'
 
 /**
@@ -22,6 +22,20 @@ export function useLogin() {
 export function useLogout() {
   const clearToken = useAuthStore((s) => s.clearToken)
   return clearToken
+}
+
+/**
+ * Mutation hook for registration. Stores token on success.
+ */
+export function useRegister() {
+  const setAuth = useAuthStore((s) => s.setAuth)
+  return useMutation({
+    mutationFn: (payload) => register(payload),
+    retry: false,
+    onSuccess: (data) => {
+      setAuth({ token: data.access_token, username: data.username })
+    },
+  })
 }
 
 export { useAuthToken }

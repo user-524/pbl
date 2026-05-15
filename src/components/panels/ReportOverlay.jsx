@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   RadarChart,
   PolarGrid,
@@ -8,8 +9,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { useDownloadReport } from '../../hooks/useReports.js'
-import { useSaveLearning } from '../../hooks/useLearnings.js'
-import useAnonymousStore from '../../store/anonymousStore.js'
 
 function ReportOverlay({
   reportData,
@@ -23,10 +22,8 @@ function ReportOverlay({
   onClose,
   onNewProblem,
 }) {
-  const ensureAnonymousId = useAnonymousStore((s) => s.ensureAnonymousId)
+  const navigate = useNavigate()
   const { mutate: downloadMutate, isPending: isDownloading } = useDownloadReport()
-  const { mutate: saveMutate, isPending: isSaving } = useSaveLearning()
-  const [savedOk, setSavedOk] = useState(false)
   const [actionError, setActionError] = useState('')
 
   const handleDownload = () => {
@@ -50,25 +47,9 @@ function ReportOverlay({
     )
   }
 
-  const handleSaveLearning = () => {
-    if (!submissionId || !reportId) return
-    setActionError('')
-    const anonymousId = ensureAnonymousId()
-    saveMutate(
-      {
-        anonymous_id: anonymousId,
-        submission_id: submissionId,
-        report_id: reportId,
-        problem_title: problemTitle ?? '',
-        language: language ?? '',
-        raw_code: rawCode ?? '',
-        total_score: totalScore ?? reportData?.total_score ?? 0,
-      },
-      {
-        onSuccess: () => setSavedOk(true),
-        onError: () => setActionError('학습 저장 중 오류가 발생했습니다.'),
-      }
-    )
+  const handleGoToMyPage = () => {
+    onClose()
+    navigate('/mypage')
   }
 
   if (!reportData) {
@@ -115,17 +96,11 @@ function ReportOverlay({
               {isDownloading ? '다운로드 중...' : '⬇ 다운로드'}
             </button>
             <button
-              style={{
-                ...styles.saveBtn,
-                ...(savedOk ? styles.saveBtnDone : {}),
-                opacity: isSaving || !reportId || !submissionId ? 0.6 : 1,
-                cursor: isSaving || savedOk || !reportId || !submissionId ? 'not-allowed' : 'pointer',
-              }}
-              onClick={handleSaveLearning}
-              disabled={isSaving || savedOk || !reportId || !submissionId}
-              title="학습 기록 저장 (익명)"
+              style={styles.mypageBtn}
+              onClick={handleGoToMyPage}
+              title="마이페이지에서 내 리포트 보기"
             >
-              {savedOk ? '✓ 저장됨' : isSaving ? '저장 중...' : '💾 학습 저장'}
+              마이페이지
             </button>
             <button style={styles.newProblemBtn} onClick={onNewProblem}>
               + 새 문제
@@ -259,6 +234,10 @@ function ReportOverlay({
               </ul>
             </div>
           </div>
+
+          <button style={styles.mypageBottomBtn} onClick={handleGoToMyPage}>
+            마이페이지에서 내 학습 기록 보기 →
+          </button>
         </div>
       </div>
     </div>
@@ -320,19 +299,27 @@ const styles = {
     fontSize: '12px',
     fontWeight: '600',
   },
-  saveBtn: {
-    background: '#2d1f3d',
-    border: '1px solid #a855f7',
-    color: '#d8b4fe',
+  mypageBtn: {
+    background: 'none',
+    border: '1px solid var(--color-ide-border)',
+    color: 'var(--color-ide-text-dim)',
     padding: '4px 10px',
     borderRadius: '4px',
     fontSize: '12px',
-    fontWeight: '600',
+    cursor: 'pointer',
   },
-  saveBtnDone: {
-    background: '#1a3a2a',
-    borderColor: '#4ec9b0',
-    color: '#4ec9b0',
+  mypageBottomBtn: {
+    width: '100%',
+    padding: '12px',
+    backgroundColor: '#094771',
+    border: '1px solid #007acc',
+    borderRadius: '6px',
+    color: '#9cdcfe',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textAlign: 'center',
+    flexShrink: 0,
   },
   actionErrorBar: {
     padding: '6px 16px',

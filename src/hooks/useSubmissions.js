@@ -1,7 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createSubmission, executeCode, getSubmission, runCodeSandbox, submitAnswers } from '../api/submissions.js'
+import { createSubmission, executeCode, getSubmission, getSubmissions, runCodeSandbox, submitAnswers } from '../api/submissions.js'
 import { queryKeys } from '../api/queryKeys.js'
 import useSubmissionStore from '../store/submissionStore.js'
+
+/**
+ * Fetches the list of all submissions for the current user.
+ */
+export function useSubmissionList(options = {}) {
+  return useQuery({
+    queryKey: queryKeys.submissions.list,
+    queryFn: ({ signal }) => getSubmissions({ signal }),
+    staleTime: 1000 * 60 * 2,
+    ...options,
+  })
+}
 
 /**
  * Mutation hook that runs code only (no AI question generation).

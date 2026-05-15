@@ -5,6 +5,7 @@ export const queryKeys = {
   },
   submissions: {
     all: ['submissions'],
+    list: ['submissions', 'list'],
     detail: (id) => ['submissions', id],
   },
   reports: {

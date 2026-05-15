@@ -1,6 +1,7 @@
 export const ENDPOINTS = {
   auth: {
     login: '/api/auth/login',
+    register: '/api/auth/register',
   },
   problems: {
     list: '/api/problems',
@@ -9,6 +10,7 @@ export const ENDPOINTS = {
   execute: '/api/execute',
   exe: '/api/execute',
   submissions: {
+    list: '/api/submissions',
     create: '/api/submissions',
     detail: (id) => `/api/submissions/${id}`,
     answers: (id) => `/api/submissions/${id}/answers`,
