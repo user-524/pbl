@@ -1,6 +1,7 @@
 export const ENDPOINTS = {
   auth: {
     login: '/api/auth/login',
+    register: '/api/auth/register',
   },
   problems: {
     list: '/api/problems',
