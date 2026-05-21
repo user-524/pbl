@@ -10,7 +10,8 @@ export function useSubmissionList(options = {}) {
   return useQuery({
     queryKey: queryKeys.submissions.list,
     queryFn: ({ signal }) => getSubmissions({ signal }),
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 15,
+    gfTime: 1000 * 60 * 20,
     ...options,
   })
 }

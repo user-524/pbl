@@ -37,7 +37,7 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
 
   const currentIndex = useMemo(() => {
     for (let i = 0; i < questions.length; i++) {
-      if (qaAnswers[questions[i].question_id] == null) return i
+      if (qaAnswers[questions[i].id ?? questions[i].question_id] == null) return i
     }
     return questions.length
   }, [questions, qaAnswers])
@@ -91,13 +91,13 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
 
       <div ref={scrollRef} style={styles.chatBody}>
         {visible.map((q, idx) => {
-          const selectedNumber = qaAnswers[q.question_id]
+          const qKey = q.id ?? q.question_id
+          const selectedNumber = qaAnswers[qKey]
           const isLocked = selectedNumber != null
-          const rawChoices = q.choices ?? q.options ?? []
-          if (rawChoices.length > 0) console.log(`[QASection] Q${idx} choice[0]:`, JSON.stringify(rawChoices[0]))
+          const rawChoices = q.choices ?? q.options ?? q.answer_choices ?? q.question_choices ?? q.items ?? []
           const choices = rawChoices.map((c, i) => {
-            const rawText = c.text ?? c.option_text ?? c.content ?? c.label ?? String(c)
-            const explicitCode = c.code ?? c.code_snippet ?? c.code_content ?? null
+            const rawText = typeof c === 'string' ? c : (c.text ?? c.option_text ?? c.content ?? c.label ?? c.option_content ?? c.description ?? String(c))
+            const explicitCode = typeof c === 'string' ? null : (c.code ?? c.code_snippet ?? c.code_content ?? null)
 
             let label = rawText
             let code = explicitCode
@@ -111,26 +111,27 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
             }
 
             return {
-              number: c.number ?? c.option_number ?? i + 1,
+              number: i + 1,
+              backendNum: typeof c === 'string' ? i + 1 : (c.number ?? c.option_number ?? i + 1),
               text: label,
               code,
             }
           })
 
           const selectedChoice = choices.find((c) => c.number === selectedNumber)
-          const correctNumber = q.answer_key
+          const correctNumber = q.correct_index != null ? q.correct_index + 1 : q.answer_key
           const isCorrect = isLocked && selectedNumber === correctNumber
           const wrongReason =
             !isCorrect && isLocked
-              ? q.wrong_reasons?.[String(selectedNumber)]
+              ? q.wrong_reasons?.[String(selectedNumber - 1)]
               : null
           const correctChoice = choices.find((c) => c.number === correctNumber)
           const bloomColor = BLOOM_COLORS[q.bloom_level] ?? '#888'
-          const typeLabel = TYPE_LABELS[q.type] ?? q.type ?? ''
-          const isExplOpen = openExplanations[q.question_id] ?? false
+          const typeLabel = TYPE_LABELS[q.question_type ?? q.type] ?? q.question_type ?? q.type ?? ''
+          const isExplOpen = openExplanations[qKey] ?? false
 
           return (
-            <div key={q.question_id ?? idx} style={styles.turnGroup}>
+            <div key={qKey ?? idx} style={styles.turnGroup}>
               {/* AI question bubble */}
               <div style={styles.aiMsg}>
                 <div style={styles.aiAvatar}>AI</div>
@@ -146,7 +147,7 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
                       </span>
                     )}
                   </div>
-                  <p style={styles.qText}>{q.text}</p>
+                  <p style={styles.qText}>{q.question_text ?? q.text ?? q.content ?? q.prompt ?? ''}</p>
                 </div>
               </div>
 
@@ -161,7 +162,7 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
                         key={choice.number}
                         type="button"
                         style={styles.choiceBtn}
-                        onClick={() => setQaAnswer(q.question_id, choice.number)}
+                        onClick={() => setQaAnswer(qKey, choice.number)}
                         disabled={isSubmitting}
                       >
                         <span style={styles.choiceNum}>{choice.number}.</span>
@@ -251,7 +252,7 @@ function QASection({ analysisResult, onAllAnswered, isSubmitting, errorMessage, 
                         <button
                           type="button"
                           style={styles.explToggleBtn}
-                          onClick={() => toggleExplanation(q.question_id)}
+                          onClick={() => toggleExplanation(qKey)}
                         >
                           {isExplOpen ? '▲ 해설 닫기' : '▼ 해설 보기'}
                         </button>

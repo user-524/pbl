@@ -70,10 +70,11 @@ function ReportOverlay({
     )
   }
 
+  const detailScores = reportData.detail_scores ?? {}
   const radarData = [
-    { subject: 'Keyword', score: reportData.detail_scores.keyword_match, fullMark: 40 },
-    { subject: 'Semantic', score: reportData.detail_scores.semantic_similarity, fullMark: 45 },
-    { subject: 'Time', score: reportData.detail_scores.time_complexity, fullMark: 20 },
+    { subject: 'Keyword', score: detailScores.keyword_match ?? 0, fullMark: 40 },
+    { subject: 'Semantic', score: detailScores.semantic_similarity ?? 0, fullMark: 45 },
+    { subject: 'Time', score: detailScores.time_complexity ?? 0, fullMark: 20 },
   ]
 
   return (
@@ -147,8 +148,8 @@ function ReportOverlay({
 
             <div style={styles.detailRow}>
               {[
-                { label: 'Keyword Match', value: reportData.detail_scores.keyword_match, max: 40 },
-                { label: 'Time Complexity', value: reportData.detail_scores.time_complexity, max: 20 },
+                { label: 'Keyword Match', value: detailScores.keyword_match ?? 0, max: 40 },
+                { label: 'Time Complexity', value: detailScores.time_complexity ?? 0, max: 20 },
               ].map(({ label, value, max }) => (
                 <div key={label} style={styles.detailCard}>
                   <span style={styles.detailLabel}>{label}</span>
@@ -170,7 +171,7 @@ function ReportOverlay({
             <div style={styles.keywordSection}>
               <span style={styles.keywordLabel}>취약 키워드</span>
               <div style={styles.keywordList}>
-                {reportData.weak_keywords.map((kw, i) => (
+                {(reportData.weak_keywords ?? []).map((kw, i) => (
                   <span key={i} style={styles.keyword}>{kw}</span>
                 ))}
               </div>
@@ -205,13 +206,13 @@ function ReportOverlay({
               <div style={styles.semanticCard}>
                 <span style={styles.detailLabel}>Semantic Similarity</span>
                 <span style={{ ...styles.detailValue, fontSize: '28px' }}>
-                  {reportData.detail_scores.semantic_similarity}
+                  {detailScores.semantic_similarity ?? 0}
                 </span>
                 <div style={styles.progressBar}>
                   <div
                     style={{
                       ...styles.progressFill,
-                      width: `${(reportData.detail_scores.semantic_similarity / 45) * 100}%`,
+                      width: `${((detailScores.semantic_similarity ?? 0) / 45) * 100}%`,
                       backgroundColor: '#4ec9b0',
                     }}
                   />
@@ -228,7 +229,7 @@ function ReportOverlay({
             <div style={styles.recSection}>
               <span style={styles.recLabel}>추천 학습 방향</span>
               <ul style={styles.recList}>
-                {reportData.recommendations.map((item, i) => (
+                {(reportData.recommendations ?? []).map((item, i) => (
                   <li key={i} style={styles.recItem}>{item}</li>
                 ))}
               </ul>

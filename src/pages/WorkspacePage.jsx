@@ -151,7 +151,7 @@ function WorkspacePage() {
       {
         onSuccess: (result) => {
           setSubmissionId(result.submission_id)
-          initializeQaAnswers(result.generated_questions)
+          initializeQaAnswers(result.generated_questions ?? [])
           setWorkflowStatus('qa')
         },
         onError: () => setWorkflowStatus('executed'),
@@ -168,12 +168,12 @@ function WorkspacePage() {
     // 스토어에서 직접 최신 상태를 읽어 클로저 스테일 문제를 방지
     const freshQaAnswers = useSubmissionStore.getState().qaAnswers
     const answers = questions.map((q) => ({
-      question_id: String(q.question_id),
-      selected_index: freshQaAnswers[q.question_id] ?? null,
+      question_id: q.id ?? q.question_id,
+      selected_number: freshQaAnswers[q.id ?? q.question_id] ?? null,
     }))
 
-    if (answers.some((a) => a.selected_index == null)) {
-      console.error('[submitAnswers] null selected_index detected:', answers)
+    if (answers.some((a) => a.selected_number == null)) {
+      console.error('[submitAnswers] null selected_number detected:', answers)
       setQaErrorMessage('일부 답변이 누락되었습니다. 페이지를 새로고침 후 다시 시도해 주세요.')
       return
     }

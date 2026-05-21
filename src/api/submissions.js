@@ -5,7 +5,7 @@ import { ENDPOINTS } from './endpoints.js'
  * @returns {Promise<Array>}
  */
 export async function getSubmissions({ signal } = {}) {
-  return client.get(ENDPOINTS.submissions.list, { signal })
+  return client.get(ENDPOINTS.submissions.list, { signal, timeout: 600000 })
 }
 
 /**
@@ -29,7 +29,7 @@ export async function runCodeSandbox(body, { signal } = {}) {
  * @returns {Promise<object>}
  */
 export async function createSubmission(body, { signal } = {}) {
-  return client.post(ENDPOINTS.submissions.create, JSON.stringify(body), { signal })
+  return client.post(ENDPOINTS.submissions.create, JSON.stringify(body), { signal, timeout:600000 })
 }
 
 /**
@@ -46,5 +46,5 @@ export async function getSubmission(id, { signal } = {}) {
  * @returns {Promise<object>}
  */
 export async function submitAnswers(id, body, { signal } = {}) {
-  return client.post(ENDPOINTS.submissions.answers(id), body, { signal })
+  return client.post(ENDPOINTS.submissions.answers(id), body, { signal, timeout: 600000 })
 }

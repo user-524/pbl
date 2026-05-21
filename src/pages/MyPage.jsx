@@ -2,9 +2,35 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore.js'
 import { useLogout } from '../hooks/useAuth.js'
-import { useReports, useReport, useDownloadReport } from '../hooks/useReports.js'
-import { useSubmissionList } from '../hooks/useSubmissions.js'
+import { useReports, useReport } from '../hooks/useReports.js'
 import ReportOverlay from '../components/panels/ReportOverlay.jsx'
+
+const MOCK_SUBMISSIONS = [
+  {
+    id: 1,
+    problem_title: '피보나치 수열',
+    language: 'python',
+    status: '완료',
+    created_at: '2026-05-10T10:30:00Z',
+    raw_code: 'def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)',
+  },
+  {
+    id: 2,
+    problem_title: '버블 정렬',
+    language: 'python',
+    status: '완료',
+    created_at: '2026-05-12T14:20:00Z',
+    raw_code: 'def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]',
+  },
+  {
+    id: 3,
+    problem_title: '이진 탐색',
+    language: 'javascript',
+    status: '완료',
+    created_at: '2026-05-14T09:00:00Z',
+    raw_code: 'function binarySearch(arr, target) {\n    let left = 0, right = arr.length - 1;\n    while (left <= right) {\n        const mid = Math.floor((left + right) / 2);\n        if (arr[mid] === target) return mid;\n        if (arr[mid] < target) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1;\n}',
+  },
+]
 
 const TABS = [
   { key: 'reports', label: '📊 리포트 목록' },
@@ -45,7 +71,7 @@ function ReportCard({ report, onView }) {
           <ScoreBar label="Time" value={report.detail_scores.time_complexity} max={20} color="#dcdcaa" />
         </div>
       )}
-      <button style={styles.viewBtn} onClick={() => onView(report.id)}>
+      <button style={styles.viewBtn} onClick={() => onView(report.report_id ?? report.id)}>
         상세 보기 →
       </button>
     </div>
@@ -115,29 +141,6 @@ function ErrorState({ message }) {
 
 function ReportDetailModal({ reportId, onClose }) {
   const { data: report, isLoading, isError } = useReport(reportId, { enabled: !!reportId })
-  const { mutate: downloadMutate, isPending: isDownloading } = useDownloadReport()
-  const [downloadError, setDownloadError] = useState('')
-
-  const handleDownload = () => {
-    setDownloadError('')
-    downloadMutate(
-      { reportId, format: 'pdf' },
-      {
-        onSuccess: (blob) => {
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `report-${reportId}.pdf`
-          document.body.appendChild(a)
-          a.click()
-          a.remove()
-          setTimeout(() => URL.revokeObjectURL(url), 0)
-        },
-        onError: () => setDownloadError('다운로드 중 오류가 발생했습니다.'),
-      }
-    )
-  }
-
   if (!reportId) return null
 
   if (isLoading) {
@@ -193,15 +196,18 @@ function MyPage() {
   const [selectedReportId, setSelectedReportId] = useState(null)
 
   const { data: reports, isLoading: reportsLoading, isError: reportsError } = useReports()
-  const { data: submissions, isLoading: submissionsLoading, isError: submissionsError } = useSubmissionList()
 
   const handleLogout = () => {
     clearToken()
     navigate('/login')
   }
 
-  const reportList = Array.isArray(reports) ? reports : []
-  const submissionList = Array.isArray(submissions) ? submissions : []
+  const reportList = Array.isArray(reports)
+    ? reports
+    : Array.isArray(reports?.reports)
+      ? reports.reports
+      : []
+  const submissionList = MOCK_SUBMISSIONS
 
   return (
     <div style={styles.page}>
@@ -257,7 +263,7 @@ function MyPage() {
             )}
             {reportList.map((report) => (
               <ReportCard
-                key={report.id}
+                key={report.report_id ?? report.id}
                 report={report}
                 onView={setSelectedReportId}
               />
@@ -267,9 +273,7 @@ function MyPage() {
 
         {activeTab === 'submissions' && (
           <div style={styles.grid}>
-            {submissionsLoading && <LoadingState />}
-            {submissionsError && <ErrorState message="제출 목록을 불러오지 못했습니다." />}
-            {!submissionsLoading && !submissionsError && submissionList.length === 0 && (
+            {submissionList.length === 0 && (
               <EmptyState message="아직 제출된 코드가 없습니다." />
             )}
             {submissionList.map((sub) => (
