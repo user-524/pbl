@@ -365,11 +365,9 @@ function WorkspacePage() {
               <span style={styles.panelLabel}>
                 {workflowStatus === 'idle' ? '문제 정보' : '실행 결과'}
               </span>
-              {workflowStatus !== 'idle' && (
-                <button style={styles.newProblemBtn} onClick={handleNewProblem}>
-                  새 문제
-                </button>
-              )}
+              <button style={styles.newProblemBtn} onClick={handleNewProblem}>
+                + 새 문제
+              </button>
             </div>
 
             <div style={styles.rightPanelBody}>

@@ -140,6 +140,7 @@ function ErrorState({ message }) {
 }
 
 function ReportDetailModal({ reportId, onClose }) {
+  const navigate = useNavigate()
   const { data: report, isLoading, isError } = useReport(reportId, { enabled: !!reportId })
   if (!reportId) return null
 
@@ -182,7 +183,7 @@ function ReportDetailModal({ reportId, onClose }) {
       language={report.language}
       rawCode={report.raw_code}
       onClose={onClose}
-      onNewProblem={onClose}
+      onNewProblem={() => { onClose(); navigate('/workspace') }}
     />
   )
 }
