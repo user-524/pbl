@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   RadarChart,
@@ -8,7 +8,8 @@ import {
   Radar,
   ResponsiveContainer,
 } from 'recharts'
-import { useDownloadReport } from '../../hooks/useReports.js'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 function ReportOverlay({
   reportData,
@@ -23,28 +24,59 @@ function ReportOverlay({
   onNewProblem,
 }) {
   const navigate = useNavigate()
-  const { mutate: downloadMutate, isPending: isDownloading } = useDownloadReport()
   const [actionError, setActionError] = useState('')
+  const [isDownloading, setIsDownloading] = useState(false)
+  const bodyRef = useRef(null)
 
-  const handleDownload = () => {
-    if (!reportId) return
+  const handleDownload = async () => {
+    if (!bodyRef.current) return
     setActionError('')
-    downloadMutate(
-      { reportId, format: 'pdf' },
-      {
-        onSuccess: (blob) => {
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `report-${reportId}.pdf`
-          document.body.appendChild(a)
-          a.click()
-          a.remove()
-          setTimeout(() => URL.revokeObjectURL(url), 0)
-        },
-        onError: () => setActionError('리포트 다운로드 중 오류가 발생했습니다.'),
-      }
-    )
+    setIsDownloading(true)
+
+    const body = bodyRef.current
+    const panel = body.parentElement
+    const navBtn = body.lastElementChild
+
+    const savedBody = { overflowY: body.style.overflowY, height: body.style.height, flex: body.style.flex }
+    const savedPanel = { overflow: panel.style.overflow, height: panel.style.height }
+
+    try {
+      body.scrollTop = 0
+      if (navBtn) navBtn.style.display = 'none'
+
+      // overflow 제약을 풀어 html2canvas가 전체 콘텐츠를 캡처하도록
+      body.style.flex = 'none'
+      body.style.overflowY = 'visible'
+      body.style.height = 'auto'
+      panel.style.overflow = 'visible'
+      panel.style.height = 'auto'
+
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+      const canvas = await html2canvas(body, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#2d2d2d',
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const ptW = 595.28
+      const ratio = ptW / canvas.width
+      const ptH = canvas.height * ratio
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: [ptW, ptH] })
+      pdf.addImage(imgData, 'PNG', 0, 0, ptW, ptH)
+      pdf.save(`report-${reportId ?? 'download'}.pdf`)
+    } catch {
+      setActionError('PDF 생성 중 오류가 발생했습니다.')
+    } finally {
+      body.style.overflowY = savedBody.overflowY
+      body.style.height = savedBody.height
+      body.style.flex = savedBody.flex
+      panel.style.overflow = savedPanel.overflow
+      panel.style.height = savedPanel.height
+      if (navBtn) navBtn.style.display = ''
+      setIsDownloading(false)
+    }
   }
 
   const handleGoToMyPage = () => {
@@ -70,10 +102,11 @@ function ReportOverlay({
     )
   }
 
+  const rd = reportData?.data ?? reportData
+  const detailScores = rd.detail_scores ?? {}
   const radarData = [
-    { subject: 'Keyword', score: reportData.detail_scores.keyword_match, fullMark: 40 },
-    { subject: 'Semantic', score: reportData.detail_scores.semantic_similarity, fullMark: 45 },
-    { subject: 'Time', score: reportData.detail_scores.time_complexity, fullMark: 20 },
+    { subject: '이해도', score: detailScores.comprehension ?? 0, fullMark: 100 },
+    { subject: '코드품질', score: detailScores.code_quality ?? 0, fullMark: 100 },
   ]
 
   return (
@@ -86,14 +119,14 @@ function ReportOverlay({
             <button
               style={{
                 ...styles.downloadBtn,
-                opacity: isDownloading || !reportId ? 0.5 : 1,
-                cursor: isDownloading || !reportId ? 'not-allowed' : 'pointer',
+                opacity: isDownloading ? 0.5 : 1,
+                cursor: isDownloading ? 'not-allowed' : 'pointer',
               }}
               onClick={handleDownload}
-              disabled={isDownloading || !reportId}
+              disabled={isDownloading}
               title="리포트 PDF 다운로드"
             >
-              {isDownloading ? '다운로드 중...' : '⬇ 다운로드'}
+              {isDownloading ? '생성 중...' : '⬇ 다운로드'}
             </button>
             <button
               style={styles.mypageBtn}
@@ -112,11 +145,11 @@ function ReportOverlay({
           <div style={styles.actionErrorBar}>{actionError}</div>
         )}
 
-        <div style={styles.body}>
+        <div ref={bodyRef} style={styles.body}>
           {/* 총점 */}
           <div style={styles.scoreBox}>
             <span style={styles.scoreLabel}>총 이해도 점수</span>
-            <span style={styles.scoreValue}>{reportData.total_score}점</span>
+            <span style={styles.scoreValue}>{rd.total_score ?? '-'}점</span>
           </div>
 
           {/* ── 섹션 1: 코드 평가 ── */}
@@ -147,8 +180,7 @@ function ReportOverlay({
 
             <div style={styles.detailRow}>
               {[
-                { label: 'Keyword Match', value: reportData.detail_scores.keyword_match, max: 40 },
-                { label: 'Time Complexity', value: reportData.detail_scores.time_complexity, max: 20 },
+                { label: 'Code Quality', value: detailScores.code_quality ?? 0, max: 100 },
               ].map(({ label, value, max }) => (
                 <div key={label} style={styles.detailCard}>
                   <span style={styles.detailLabel}>{label}</span>
@@ -170,7 +202,7 @@ function ReportOverlay({
             <div style={styles.keywordSection}>
               <span style={styles.keywordLabel}>취약 키워드</span>
               <div style={styles.keywordList}>
-                {reportData.weak_keywords.map((kw, i) => (
+                {(rd.weak_keywords ?? []).map((kw, i) => (
                   <span key={i} style={styles.keyword}>{kw}</span>
                 ))}
               </div>
@@ -203,32 +235,32 @@ function ReportOverlay({
               </div>
 
               <div style={styles.semanticCard}>
-                <span style={styles.detailLabel}>Semantic Similarity</span>
+                <span style={styles.detailLabel}>이해도 (Comprehension)</span>
                 <span style={{ ...styles.detailValue, fontSize: '28px' }}>
-                  {reportData.detail_scores.semantic_similarity}
+                  {detailScores.comprehension ?? 0}
                 </span>
                 <div style={styles.progressBar}>
                   <div
                     style={{
                       ...styles.progressFill,
-                      width: `${(reportData.detail_scores.semantic_similarity / 45) * 100}%`,
+                      width: `${((detailScores.comprehension ?? 0) / 100) * 100}%`,
                       backgroundColor: '#4ec9b0',
                     }}
                   />
                 </div>
-                <span style={styles.detailMax}>/ 45</span>
+                <span style={styles.detailMax}>/ 100</span>
               </div>
             </div>
 
             <div style={styles.feedbackBox}>
               <span style={styles.feedbackLabel}>AI 피드백</span>
-              <p style={styles.feedbackText}>{reportData.ai_feedback}</p>
+              <p style={styles.feedbackText}>{rd.ai_feedback}</p>
             </div>
 
             <div style={styles.recSection}>
               <span style={styles.recLabel}>추천 학습 방향</span>
               <ul style={styles.recList}>
-                {reportData.recommendations.map((item, i) => (
+                {(rd.recommendations ?? []).map((item, i) => (
                   <li key={i} style={styles.recItem}>{item}</li>
                 ))}
               </ul>

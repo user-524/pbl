@@ -26,11 +26,13 @@ const useSubmissionStore = create(
 
       initializeQaAnswers: (questions) =>
         set((state) => {
+          if (!Array.isArray(questions)) return {}
           const nextAnswers = { ...state.qaAnswers }
 
           questions.forEach((question) => {
-            if (nextAnswers[question.question_id] == null) {
-              nextAnswers[question.question_id] = null
+            const key = question.id ?? question.question_id
+            if (nextAnswers[key] == null) {
+              nextAnswers[key] = null
             }
           })
 
