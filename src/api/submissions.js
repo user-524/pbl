@@ -5,7 +5,7 @@ import { ENDPOINTS } from './endpoints.js'
  * @returns {Promise<Array>}
  */
 export async function getSubmissions({ signal } = {}) {
-  return client.get(ENDPOINTS.submissions.list, { signal, timeout: 600000 })
+  return client.get(ENDPOINTS.submissions.list, { signal, timeout: 0 })
 }
 
 /**
@@ -46,5 +46,5 @@ export async function getSubmission(id, { signal } = {}) {
  * @returns {Promise<object>}
  */
 export async function submitAnswers(id, body, { signal } = {}) {
-  return client.post(ENDPOINTS.submissions.answers(id), body, { signal, timeout: 600000 })
+  return client.post(ENDPOINTS.submissions.answers(id), body, { signal, timeout: 0 })
 }
