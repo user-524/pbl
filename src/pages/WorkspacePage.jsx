@@ -25,6 +25,7 @@ function WorkspacePage() {
 
   // idle | executing | executed | analyzing | qa | evaluating | qa_done | reporting | completed
   const [workflowStatus, setWorkflowStatus] = useState('idle')
+  const [runErrorMessage, setRunErrorMessage] = useState('')
   const [qaErrorMessage, setQaErrorMessage] = useState('')
   const [submissionId, setSubmissionId] = useState(null)
   const [reportId, setReportId] = useState(null)
@@ -107,6 +108,7 @@ function WorkspacePage() {
     if (!draft.raw_code.trim()) return
 
     clearCodeExecutionResult()
+    setRunErrorMessage('')
     setWorkflowStatus('executing')
 
     const meaningfulTestCases = (draft.test_cases || []).filter(
@@ -127,7 +129,11 @@ function WorkspacePage() {
             setWorkflowStatus('executed')
           }
         },
-        onError: () => setWorkflowStatus('idle'),
+        onError: (error) => {
+          console.error('[코드 실행 오류]', error)
+          setRunErrorMessage(error?.message ?? '코드 실행 중 오류가 발생했습니다.')
+          setWorkflowStatus('idle')
+        },
       }
     )
   }
@@ -417,6 +423,9 @@ function WorkspacePage() {
                       <option value="python">Python</option>
                       <option value="javascript">JavaScript</option>
                       <option value="java">Java</option>
+                      <option value="c">C</option>
+                      <option value="cpp">C++</option>
+                      <option value="csharp">C#</option>
                     </select>
                   </div>
 
@@ -431,6 +440,9 @@ function WorkspacePage() {
                   >
                     {isExecuting ? '실행 중...' : '▶ 코드 실행'}
                   </button>
+                  {runErrorMessage && (
+                    <div style={styles.runErrorMsg}>⚠ {runErrorMessage}</div>
+                  )}
                 </div>
               ) : (
                 /* 실행 결과 + Q&A 영역 */
@@ -627,6 +639,14 @@ const styles = {
   errorMsg: {
     color: '#f44747',
     fontSize: '11px',
+  },
+  runErrorMsg: {
+    color: '#f44747',
+    fontSize: '12px',
+    padding: '8px 12px',
+    backgroundColor: '#3a1a1a',
+    border: '1px solid #f44747',
+    borderRadius: '4px',
   },
   /* 실행 결과 + Q&A */
   resultAndQA: {
